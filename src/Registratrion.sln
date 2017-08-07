@@ -5,6 +5,11 @@ VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Registration", "Website\Registration.csproj", "{BE92B116-CB9F-40B9-B344-DCFCEAA20095}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Meta", "Meta", "{332C571F-969F-421D-8257-BCE08DE0B67C}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE.md = LICENSE.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
