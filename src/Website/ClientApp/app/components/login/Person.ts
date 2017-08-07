@@ -1,0 +1,124 @@
+﻿import { ValidationRules, validateTrigger} from "aurelia-validation";
+import { autoinject } from 'aurelia-framework';
+import { EventAggregator } from "aurelia-event-aggregator";
+import { ValidationControllerFactory, ValidationController } from "aurelia-validation";
+import * as moment from "moment";
+
+@autoinject()
+export class PersonModel {
+
+    constructor(validationControllerFactory: ValidationControllerFactory, eventAggregator: EventAggregator) {
+        this.validation = validationControllerFactory.createForCurrentScope();
+        this.validation.validateTrigger = validateTrigger.change;
+        this.eventAggregator = eventAggregator;
+    }
+
+    determineActivationStrategy() {
+        return "replace";
+    }
+
+    validation: ValidationController;
+    eventAggregator: EventAggregator;
+    data: Person;
+    orig: Person;
+
+    activate(data: Person) {
+        this.orig = data;
+        this.data = Object.assign(new Person(), data);
+        this.validation.reset();
+    }
+
+    genderOptions = [
+        { value: "F", text: "Female" },
+        { value: "M", text: "Male" }
+    ];
+
+    gradeOptions = [
+        { value: null, text: "[None]" },
+        { value: -1, text: "Pre-K" },
+        { value: 0, text: "Kindergarten" },
+        { value: 1, text: "1st" },
+        { value: 2, text: "2nd" },
+        { value: 3, text: "3rd" },
+        { value: 4, text: "4th" },
+        { value: 5, text: "5th" },
+        { value: 6, text: "6th" }
+    ];
+
+    async saveClicked() {
+        let validationResult = await this.validation.validate({ object: this.data });
+
+        if (!validationResult.valid) {
+            return;
+        }
+
+        Object.assign(this.orig, this.data);
+
+        this.eventAggregator.publish("Person_Updated", this.orig);
+    }
+
+    cancelClicked() {
+        this.eventAggregator.publish("Person_Cancel", this.orig);
+    }
+}
+
+export class Person {
+    id: string;
+    firstName: string;
+    lastName: string;
+    child: boolean;
+    emailAddress: string;
+    phoneNumber: string;
+
+    grade: string;
+    gender: string;
+    birthDate: string;
+
+    medicalNotes: string;
+    isPrimaryContact: boolean;
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+
+    get displayName() {
+        if (!this.firstName && !this.lastName) {
+            return "**New Person**";
+        } else {
+            return `${this.firstName} ${this.lastName}`;
+        }
+    }
+
+    get age() {
+        if (this.birthDate) {
+            return moment().diff(moment(this.birthDate,"M/D/YYYY"), "years");
+        } else {
+            return "";
+        }
+    }
+
+}
+
+ValidationRules.customRule(
+    'date',
+    (value, obj) => value === null || value === undefined || value == "" || (/\d{1,2}\/\d{1,2}\/\d{4}/i.test(value) && moment(value, "MM/DD/YYYY").isValid()),
+    `\${$displayName} must be a valid date in the format M/D/YYYY.`
+);
+
+ValidationRules
+    .ensure<Person, string>('firstName').required().maxLength(100).minLength(2)
+    .ensure('lastName').required().maxLength(100).minLength(2)
+
+    .ensure('emailAddress').required().when(x => !x.child && x.isPrimaryContact).email().maxLength(250)
+    .ensure('street').required().when(x => !x.child && x.isPrimaryContact).maxLength(200)
+    .ensure('city').required().when(x => !x.child && x.isPrimaryContact).minLength(3).maxLength(100)
+    .ensure('state').required().when(x => !x.child && x.isPrimaryContact).maxLength(2).minLength(2)
+    .ensure('zip').required().when(x => !x.child && x.isPrimaryContact).maxLength(5).minLength(5)
+
+    .ensure('phoneNumber').required().when(x => !x.child).maxLength(13).minLength(10)
+
+    .ensure('grade').required().when(x => x.child)
+    .ensure('gender').required().when(x => x.child)
+    .ensure('birthDate').required().when(x => x.child).satisfiesRule("date")
+
+    .on(Person);

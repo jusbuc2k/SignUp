@@ -1,0 +1,43 @@
+﻿<template>
+    <form if.bind="showEmailSearchForm" submit.delegate="findClicked()">
+        <h2>Get Started</h2>
+        <p>Begin by entering your e-mail address below:</p>
+        <div class="form-group">
+            <label for="exampleInputEmail1">Email address</label>
+            <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Email" value.bind="emailAddress">
+        </div>
+        <button type="submit" class="btn btn-default" click.delegate="findClicked()">Submit</button>
+    </form>
+
+    <form if.bind="showLoginForm">
+        <h2>Welcome Back!</h2>
+        <p>
+            It looks like you are already in our database. We have sent you an e-mail message
+            in order to confirm your identity. Please check your e-mail, and enter the code
+            you received in the message below:
+        </p>
+        <div class="form-group">
+            <label for="exampleInputEmail1">Email address</label>
+            <p class="form-control-static">${emailAddress}</p>
+        </div>
+        <div class="form-group">
+            <label for="validationCode">Validation Code</label>
+            <input type="text" class="form-control" id="validationCode" value.bind="token">
+        </div>
+        <button type="submit" class="btn btn-default" click.delegate="confirmClicked()">Submit</button>
+    </form>
+
+    <form if.bind="showFirstTimeForm">
+        <h2>Welcome</h2>
+        <p>
+            It looks like you aren't in our database yet. Please enter your contact information
+            below to continue the registration process.
+        </p>
+
+        <compose view-model="./Person" model.bind="newPerson"></compose>
+
+        <button type="submit" class="btn btn-default" click.delegate="submitNewPersonClicked()">Submit</button>
+    </form>    
+
+
+</template>

@@ -1,0 +1,49 @@
+﻿<template>
+    <h2>
+        Review &amp; Confirm Registration
+    </h2>
+
+    <p>
+        Review the information below and then click Complete Registration.
+    </p>
+
+    <div if.bind="errors.length">
+        <div class="alert alert-danger" repeat.for="error of errors">
+            ${error}
+        </div>
+    </div>
+
+    <ul class="list-group">
+        <li repeat.for="person of people" class="list-group-item">
+            <div class="row">
+                <div class="col-xs-8">
+                    <div>
+                        <i class="fa ${person.child ? 'fa-child':'fa-user'}"></i>
+                        ${person.displayName}
+                    </div>
+                    <div>
+                        <small>${person.child ? 'Child' : 'Adult'}</small> 
+                        <small if.bind="person.child">|&nbsp;Age: ${person.age}</small>
+                        <small if.bind="person.child">|&nbsp;Grade: ${person.grade}</small> 
+                        <small if.bind="person.group">|&nbsp;Group: ${person.group}</small> 
+                    </div>                    
+                </div>
+                <div class="col-xs-4">
+                    <span if.bind="person.cost">Fee: $${person.cost}</span>
+                </div>
+            </div>           
+        </li>
+    </ul>
+
+    <p class="text-right">
+        Total Registration Fees*: $${totalCost}
+    </p>
+
+    <p class="text-right">
+        <a href="#" click.delegate="backClicked()">Go Back</a>&nbsp;
+        <button class="btn btn-success" click.delegate="submitClicked()">Complete Registration</button>
+    </p>
+
+    <p>* Registration fees can be paid with cash or check made to Faith Baptist Church. Scholarships are available so please ask if registration fees are a concern.</p>
+    
+</template>

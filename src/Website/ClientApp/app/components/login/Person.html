@@ -1,0 +1,116 @@
+﻿<template>
+
+    <form>
+        <div class="row">
+            <div class="col-sm-6 form-group" validation-errors.bind="firstNameErrors" class.bind="firstNameErrors.length ? 'has-error' : ''">
+                <label class="control-label" for="firstName">First Name</label>
+                <input type="email" class="form-control" id="firstName" value.bind="data.firstName & validate">
+                <span class="help-block" repeat.for="errorInfo of firstNameErrors">
+                    ${errorInfo.error.message}
+                </span>
+            </div>
+            <div class="col-sm-6 form-group" validation-errors.bind="lastNameErrors" class.bind="lastNameErrors.length ? 'has-error' : ''">
+                <label class="control-label" for="lastName">Last Name</label>
+                <input type="email" class="form-control" id="lastName" value.bind="data.lastName & validate">
+                <span class="help-block" repeat.for="errorInfo of lastNameErrors">
+                    ${errorInfo.error.message}
+                </span>
+            </div>
+        </div>       
+
+        <div if.bind="!data.child">
+            <div class="checkbox">
+                <label><input type="checkbox" checked.bind="data.isPrimaryContact" /> This is the primary contact for household</label>
+            </div>
+
+            <div class="form-group" validation-errors.bind="emailAddressErrors" class.bind="emailAddressErrors.length ? 'has-error' : ''">
+                <label class="control-label" for="emailAddress">Email address</label>
+                <input type="email" class="form-control" id="emailAddress" value.bind="data.emailAddress & validate">
+                <span class="help-block" repeat.for="errorInfo of emailAddressErrors">
+                    ${errorInfo.error.message}
+                </span>
+            </div>
+
+            <div class="form-group" validation-errors.bind="phoneNumberErrors" class.bind="phoneNumberErrors.length ? 'has-error' : ''">
+                <label class="control-label" for="mobilePhone">Mobile Phone</label>
+                <input type="text" class="form-control" id="mobilePhone" value.bind="data.phoneNumber & validate">
+                <span class="help-block" repeat.for="errorInfo of phoneNumberErrors">
+                    ${errorInfo.error.message}
+                </span>
+            </div>
+
+            <div class="form-group" validation-errors.bind="streetErrors" class.bind="streetErrors.length ? 'has-error' : ''">
+                <label class="control-label" for="streetAddress">Street</label>
+                <textarea class="form-control" id="streetAddress" value.bind="data.street & validate"></textarea>
+                <span class="help-block" repeat.for="errorInfo of streetErrors">
+                    ${errorInfo.error.message}
+                </span>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-4 form-group" validation-errors.bind="zipErrors" class.bind="zipErrors.length ? 'has-error' : ''">
+                    <label class="control-label" for="addressZip">ZIP</label>
+                    <input type="text" class="form-control" id="addressZip" value.bind="data.zip & validate">
+                    <span class="help-block" repeat.for="errorInfo of zipCErrors">
+                        ${errorInfo.error.message}
+                    </span>
+                </div>
+                <div class="col-sm-4 form-group" validation-errors.bind="cityErrors" class.bind="cityErrors.length ? 'has-error' : ''">
+                    <label class="control-label" for="addressCity">City</label>
+                    <input type="text" class="form-control" id="addressCity" value.bind="data.city & validate">
+                    <span class="help-block" repeat.for="errorInfo of cityErrors">
+                        ${errorInfo.error.message}
+                    </span>
+                </div>
+                <div class="col-sm-2 form-group" validation-errors.bind="stateErrors" class.bind="stateErrors.length ? 'has-error' : ''">
+                    <label class="control-label" for="addressState">State</label>
+                    <input type="text" class="form-control" id="addressState" value.bind="data.state & validate">
+                    <span class="help-block" repeat.for="errorInfo of stateErrors">
+                        ${errorInfo.error.message}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div if.bind="data.child">
+            <div class="form-group" validation-errors.bind="genderErrors" class.bind="genderErrors.length ? 'has-error' : ''">
+                <label class="control-label" for="gender">Gender</label>
+                <select type="text" class="form-control" id="gender" value.bind="data.gender & validate">
+                    <option repeat.for="opt of genderOptions" value.bind="opt.value">${opt.text}</option>
+                </select>
+                <span class="help-block" repeat.for="errorInfo of genderErrors">
+                    ${errorInfo.error.message}
+                </span>
+            </div>
+            <div class="form-group" validation-errors.bind="birthDateErrors" class.bind="birthDateErrors.length ? 'has-error' : ''">
+                <label class="control-label" for="birthDate">Birth Date</label>
+                <input type="text" class="form-control" id="birthDate" value.bind="data.birthDate & validate">
+                <span class="help-block" repeat.for="errorInfo of birthDateErrors">
+                    ${errorInfo.error.message}
+                </span>
+            </div> 
+            <div class="form-group" validation-errors.bind="gradeErrors" class.bind="gradeErrors.length ? 'has-error' : ''">
+                <label class="control-label" for="grade">Grade</label>
+                <select type="text" class="form-control" id="grade" value.bind="data.grade & validate">
+                    <option repeat.for="opt of gradeOptions" value.bind="opt.value">${opt.text}</option>
+                </select>
+                <span class="help-block" repeat.for="errorInfo of gradeErrors">
+                    ${errorInfo.error.message}
+                </span>
+            </div>
+            <div class="form-group" validation-errors.bind="medicalNotesErrors" class.bind="medicalNotesErrors.length ? 'has-error' : ''">
+                <label class="control-label" for="medicalNotes">Medical Notes</label>
+                <textarea class="form-control" id="medicalNotes" value.bind="data.medicalNotes & validate"></textarea>
+                <span class="help-block" repeat.for="errorInfo of medicalNotesErrors">
+                    ${errorInfo.error.message}
+                </span>
+            </div>
+        </div>
+
+        <p class="text-right">
+            <a href="#" click.delegate="cancelClicked()">Cancel</a>&nbsp;
+            <button class="btn btn-primary" click.delegate="saveClicked()">Save</button>
+        </p>
+    </form>
+    
+</template>
