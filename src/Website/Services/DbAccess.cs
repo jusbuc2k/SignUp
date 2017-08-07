@@ -24,7 +24,7 @@ namespace Registration.Services
                 Success = true,
                 Token = "111",
                 PersonID = "19147425",
-                EmailAddress = "justin@buchmail.com"
+                EmailAddress = "justin@example.com"
             });
         }
     }
