@@ -33,7 +33,8 @@ namespace WebApplicationBasic
             services.AddOptions();
 
             services.Configure<Registration.Services.HttpPeopleApiOptions>(this.Configuration.GetSection("PcoApi"));
-
+            services.Configure<Registration.Services.SmtpOptions>(this.Configuration.GetSection("SendGrid"));
+            services.Configure<Registration.Services.DbAccessOptions>(this.Configuration.GetSection("EventDatabase"));
             services.AddScoped<IPeopleApi, Registration.Services.HttpPeopleApi>();
 
             services.AddScoped<IDataAccess, DbAccess>();

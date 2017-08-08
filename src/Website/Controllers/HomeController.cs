@@ -53,7 +53,7 @@ namespace WebApplicationBasic.Controllers
 
             var token = await _db.CreateLoginToken(model.EmailAddress, person.ID);
 
-            await _messageService.SendMessageAsync(model.EmailAddress, "Your authentication code", $"Your authentication code is: {token.Token}");
+            await _messageService.SendMessageAsync(model.EmailAddress, "Your verification code", $"Use the code {token.Token} to verify your account.");
 
             return this.Ok(new
             {
@@ -62,8 +62,8 @@ namespace WebApplicationBasic.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> VerifyLoginToken(VerifyLoginTokenModel model)
-        {
+        public async Task<IActionResult> VerifyLoginToken([FromBody]VerifyLoginTokenModel model)
+        { 
             var result = await  _db.VerifyLoginToken(model.TokenID, model.Token);
 
             if (result.Success)
@@ -180,7 +180,7 @@ namespace WebApplicationBasic.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CompleteRegistration(SaveChangesModel model)
+        public async Task<IActionResult> CompleteRegistration([FromBody]SaveChangesModel model)
         {
             if (model.IsNew)
             {

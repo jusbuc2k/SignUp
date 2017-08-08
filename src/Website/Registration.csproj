@@ -17,6 +17,7 @@
     <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="1.1.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="1.1.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="1.1.1" />
+    <PackageReference Include="Sendgrid" Version="9.7.0" />
   </ItemGroup>
   <ItemGroup>
     <!-- Files not to show in IDE -->

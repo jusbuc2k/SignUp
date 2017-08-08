@@ -35,6 +35,10 @@ export class StartModel {
         });
 
         if (result.ok) {
+            let values = await result.json();
+
+            this.tokenID = values.tokenID;
+
             this.showLoginForm = true;
         } else if (result.status == 404) {
             this.newPerson = new Person();
