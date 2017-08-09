@@ -1,0 +1,11 @@
+﻿ul.family-list > li {
+    border: solid 1px #cecece;
+    border-radius: 5px;
+}
+
+    ul.family-list > li > a {
+        background-color: #fff;
+    }
+
+    ul.family-list > li > a:hover {
+    }

@@ -24,7 +24,11 @@ namespace Registration.Models
 
         public string EmailAddress { get; set; }
 
+        public string EmailAddressID { get; set; }
+
         public string PhoneNumber { get; set; }
+
+        public string PhoneNumberID { get; set; }
 
         public string Grade { get; set; }
 
@@ -39,6 +43,8 @@ namespace Registration.Models
         public string State { get; set; }
 
         public string Zip { get; set; }
+
+        public string AddressID { get; set; }
 
         public void CopyToPcoPerson(Pco.PcoPeoplePerson person)
         {

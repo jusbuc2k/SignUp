@@ -29,6 +29,8 @@ namespace Registration.Services
 
         Task AddToHousehold(string householdID, string personID);
 
+        Task<PcoListResponse<PcoStreetAddress>> FindAddressByZipCode(string zip);
+
         //Task<IEnumerable<PcoDataRecord<PcoPeopleHousehold>>> GetHouseholdByEmail(string emailAddress);
 
         //Task<PcoDataRecord<PcoPeoplePerson>> CreatePerson(PcoPeoplePerson person, PcoDataRecord<PcoEmailAddress> emailAddress = null, PcoDataRecord<PhoneNumber> phoneNumber = null, PcoDataRecord<StreetAddress> address = null);

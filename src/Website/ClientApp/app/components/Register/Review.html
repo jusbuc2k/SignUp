@@ -4,7 +4,8 @@
     </h2>
 
     <p>
-        Review the information below and then click Complete Registration.
+        Ensure each family member you wish to register is checked below. If a check box is
+        not available, it indicates the person is not eligable to register for this event.
     </p>
 
     <div if.bind="errors.length">
@@ -16,7 +17,11 @@
     <ul class="list-group">
         <li repeat.for="person of people" class="list-group-item">
             <div class="row">
-                <div class="col-xs-8">
+                <div class="col-xs-1 enroll-check">
+                    <i class="fa fa-ban" if.bind="!person.eligable"></i>
+                    <input type="checkbox" checked.bind="person.selected" if.bind="person.eligable" />
+                </div>
+                <div class="col-xs-7">
                     <div>
                         <i class="fa ${person.child ? 'fa-child':'fa-user'}"></i>
                         ${person.displayName}
@@ -25,11 +30,11 @@
                         <small>${person.child ? 'Child' : 'Adult'}</small> 
                         <small if.bind="person.child">|&nbsp;Age: ${person.age}</small>
                         <small if.bind="person.child">|&nbsp;Grade: ${person.grade}</small> 
-                        <small if.bind="person.group">|&nbsp;Group: ${person.group}</small> 
+                        <small if.bind="person.fee">|&nbsp;Group: ${person.fee.group}</small> 
                     </div>                    
                 </div>
                 <div class="col-xs-4">
-                    <span if.bind="person.cost">Fee: $${person.cost}</span>
+                    <span if.bind="person.fee">Fee: $${person.fee.cost}</span>
                 </div>
             </div>           
         </li>
@@ -44,6 +49,6 @@
         <button class="btn btn-success" click.delegate="submitClicked()">Complete Registration</button>
     </p>
 
-    <p>* Registration fees can be paid with cash or check made to Faith Baptist Church. Scholarships are available so please ask if registration fees are a concern.</p>
+    <p>${eventFeesNotice}</p>
     
 </template>

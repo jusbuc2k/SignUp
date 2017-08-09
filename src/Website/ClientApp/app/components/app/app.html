@@ -1,6 +1,17 @@
 <template>
     <require from="../navmenu/navmenu.html"></require>
     <require from="./app.css"></require>
+
+    <nav class="navbar navbar-default navbar-inverse">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a class="navbar-brand" href="#">
+                    ${siteName}
+                </a>
+            </div>
+        </div>
+    </nav>
+
     <div class="container-fluid">
         <router-view></router-view>
         <!--<div class="row">

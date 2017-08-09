@@ -39,7 +39,7 @@
                     <button class="btn btn-default" click.delegate="addPerson(true)">
                         <i class="fa fa-child"></i> Add Child
                     </button>
-                    <button class="btn btn-default" click.delegate="addPerson(true)">
+                    <button class="btn btn-default" click.delegate="addPerson(false)">
                         <i class="fa fa-user"></i> Add Adult
                     </button>
                 </p>
@@ -51,7 +51,7 @@
     </div>
 
     <p class="text-right" if.bind="!selectedPerson">
-        <button class="btn btn-success" click.delegate="nextClicked()">Next</button>
+        <button class="btn btn-success" click.delegate="nextClicked()">Next Step</button>
     </p>
     
 </template>

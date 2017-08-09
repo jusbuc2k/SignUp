@@ -8,9 +8,9 @@ using Microsoft.Extensions.Options;
 
 namespace Registration.Services
 {
-    public class SmtpOptions
+    public class SendGridOptions
     {
-        public string Url { get; set; }
+        public string ReplyAddress { get; set; }
 
         public string ApiKey { get; set; }
 
@@ -20,11 +20,11 @@ namespace Registration.Services
     }
 
 
-    public class SmtpMessageService : IMessageService
+    public class SendGridMessageService : IMessageService
     {
-        private SmtpOptions _options;
+        private SendGridOptions _options;
 
-        public SmtpMessageService(IOptions<SmtpOptions> options)
+        public SendGridMessageService(IOptions<SendGridOptions> options)
         {
             _options = options.Value;
         }
@@ -34,6 +34,11 @@ namespace Registration.Services
             var msg = new SendGridMessage();
 
             msg.SetFrom(new EmailAddress(_options.FromAddress, _options.FromName));
+
+            if (!string.IsNullOrEmpty(_options.ReplyAddress))
+            {
+                msg.SetReplyTo(new EmailAddress(_options.ReplyAddress));
+            }
 
             var recipients = new List<EmailAddress>
             {

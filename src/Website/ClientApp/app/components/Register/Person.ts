@@ -1,16 +1,35 @@
 ﻿import { ValidationRules, validateTrigger} from "aurelia-validation";
-import { autoinject } from 'aurelia-framework';
+import { autoinject, ObserverLocator } from 'aurelia-framework';
 import { EventAggregator } from "aurelia-event-aggregator";
 import { ValidationControllerFactory, ValidationController } from "aurelia-validation";
 import * as moment from "moment";
+import { HttpClient, json } from 'aurelia-fetch-client';
 
 @autoinject()
 export class PersonModel {
 
-    constructor(validationControllerFactory: ValidationControllerFactory, eventAggregator: EventAggregator) {
+    constructor(
+        http: HttpClient,
+        validationControllerFactory: ValidationControllerFactory,
+        eventAggregator: EventAggregator,
+        observer: ObserverLocator
+    ) {
         this.validation = validationControllerFactory.createForCurrentScope();
         this.validation.validateTrigger = validateTrigger.change;
         this.eventAggregator = eventAggregator;
+        this.http = http;
+        //observer.getObserver(this.data, "zip").subscribe(async (newValue, oldValue) => {
+        //    if (newValue != oldValue) {
+        //        let response = await http.fetch(`Home/GetZipLocation/${newValue}`);
+
+        //        if (response.ok) {
+        //            let loc = await response.json();
+
+        //            this.data.city = loc.city;
+        //            this.data.state = loc.state;
+        //        }
+        //    }
+        //});
     }
 
     determineActivationStrategy() {
@@ -19,6 +38,8 @@ export class PersonModel {
 
     validation: ValidationController;
     eventAggregator: EventAggregator;
+    http: HttpClient;
+
     data: Person;
     orig: Person;
 
@@ -59,6 +80,17 @@ export class PersonModel {
 
     cancelClicked() {
         this.eventAggregator.publish("Person_Cancel", this.orig);
+    }
+
+    async zipChanged() {
+        let response = await this.http.fetch(`api/Zip/${this.data.zip}`);
+
+        if (response.ok) {
+            let loc = await response.json();
+
+            this.data.city = loc.city;
+            this.data.state = loc.state;
+        }
     }
 }
 

@@ -1,11 +1,15 @@
 import { Aurelia, PLATFORM } from 'aurelia-framework';
 import { Router, RouterConfiguration } from 'aurelia-router';
 
+declare var $Environment: any;
+
 export class App {
     router: Router;
 
+    siteName: string = $Environment.siteName;
+
     configureRouter(config: RouterConfiguration, router: Router) {
-        config.title = 'Aurelia';
+        config.title = $Environment.siteName;
         config.map([
             {
                 route: [ '', 'home' ],
@@ -16,10 +20,9 @@ export class App {
                 title: 'Home'
             },
 
-            { route: 'start', name: 'start', moduleId: PLATFORM.moduleName("../login/start"), title: "First Time" },
-            { route: 'first-time', name: 'first-time', moduleId: PLATFORM.moduleName("../login/FirstTime"), title: "First Time" },
-            { route: 'family/:id', name: 'family', moduleId: PLATFORM.moduleName("../login/Family"), title: "Household" },
-            { route: 'review', name: 'review', moduleId: PLATFORM.moduleName("../login/Review"), title: "Review" }
+            { route: 'event/:id', name: 'event', moduleId: PLATFORM.moduleName("../home/event"), title: "Event Registration" }
+            //{ route: 'family/:id', name: 'family', moduleId: PLATFORM.moduleName("../Register/Family"), title: "Household" },
+            //{ route: 'review', name: 'review', moduleId: PLATFORM.moduleName("../Register/Review"), title: "Review" }
 
         ]);
 

@@ -31,15 +31,16 @@ namespace WebApplicationBasic
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddOptions();
+            services.AddMemoryCache();
 
+            services.Configure<Registration.Models.SiteOptions>(this.Configuration.GetSection("SiteOptions"));
             services.Configure<Registration.Services.HttpPeopleApiOptions>(this.Configuration.GetSection("PcoApi"));
-            services.Configure<Registration.Services.SmtpOptions>(this.Configuration.GetSection("SendGrid"));
+            services.Configure<Registration.Services.SendGridOptions>(this.Configuration.GetSection("SendGrid"));
             services.Configure<Registration.Services.DbAccessOptions>(this.Configuration.GetSection("EventDatabase"));
+
             services.AddScoped<IPeopleApi, Registration.Services.HttpPeopleApi>();
-
             services.AddScoped<IDataAccess, DbAccess>();
-
-            services.AddSingleton<IMessageService, SmtpMessageService>();
+            services.AddSingleton<IMessageService, SendGridMessageService>();
 
             // Add framework services.
             services.AddMvc();

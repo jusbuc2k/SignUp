@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +9,7 @@ namespace Registration.Models.Pco
 {
     public class PcoSingleResponse<T> : PcoResponse
     {
+        [JsonProperty("data")]
         public PcoDataRecord<T> Data { get; set; }
 
         public IEnumerable<PcoDataRecord<R>> GetRelated<R>(string relationshipName)

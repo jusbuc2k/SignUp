@@ -4,17 +4,24 @@ import { Person } from "./Person";
 import { ValidationControllerFactory, ValidationController } from "aurelia-validation";
 import { EventAggregator } from "aurelia-event-aggregator";
 import { Router } from "aurelia-router";
+import { DataStore } from "../../DataStore";
+import { EventModel } from "../home/event";
 
 @autoinject()
 export class FamilyModel {
-    constructor(http: HttpClient, router: Router, validationControllerFactory: ValidationControllerFactory, eventAggregator: EventAggregator) {
-        this.http = http;
-        this.router = router;
+    constructor(
+        protected eventModel: EventModel,
+        protected http: HttpClient,
+        protected router: Router,
+        protected validationControllerFactory: ValidationControllerFactory,
+        protected eventAggregator: EventAggregator) {
+
         this.validation = validationControllerFactory.createForCurrentScope();
 
         eventAggregator.subscribe("Person_Updated", (data) => {
             if (this.people.indexOf(data) < 0) {
                 this.people.push(data);
+                //this.eventModel.house.people.push(data);
             }            
 
             if (data.isPrimaryContact) {
@@ -33,12 +40,8 @@ export class FamilyModel {
         });
     }
 
-    protected http: HttpClient;
     protected validation: ValidationController;
-    protected router: Router;
 
-    hid: string;
-    new: boolean;
     people: Person[] = [];
     selectedPerson: Person = null;
     errors: string[] = [];
@@ -62,13 +65,10 @@ export class FamilyModel {
     }
 
     async activate(params) {
-        let house = JSON.parse(sessionStorage.getItem(`Household_${params.id}`));
-        this.people = house.people.map(p => Object.assign(new Person(), p));
-        this.hid = house.id;
-        this.new = house.new;
-
-        if (this.people.length === 1) {
-            this.selectedPerson = this.people[0];
+        if (this.eventModel.house) {
+            this.people = this.eventModel.house.people;
+        } else {
+            this.router.navigateToRoute("start");
         }
     }
 
@@ -93,12 +93,9 @@ export class FamilyModel {
             return;
         }
 
-        sessionStorage.setItem(`Household_${this.hid}`, JSON.stringify({
-            people: this.people,
-            id: this.hid
-        }));
-
-        this.router.navigateToRoute("review", { id: this.hid });
+        this.eventModel.house.people = this.people;
+                
+        this.router.navigateToRoute("review");
     }
 
     async findClicked() {

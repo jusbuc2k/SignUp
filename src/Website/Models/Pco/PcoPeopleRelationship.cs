@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -25,6 +26,7 @@ namespace Registration.Models.Pco
 
         public IDictionary<string, string> Links { get; set; }
 
+        [JsonProperty("data")]
         public JContainer Data { get; set; }
 
         public IEnumerable<PcoPeopleRelationshipData> GetDataAsList()

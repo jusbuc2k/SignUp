@@ -9,6 +9,8 @@ using Registration.Services;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Registration.Models.Pco;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace WebApplicationBasic.Controllers
 {
@@ -18,12 +20,36 @@ namespace WebApplicationBasic.Controllers
         private readonly IMessageService _messageService;
         private readonly IPeopleApi _people;
         private readonly IDataAccess _db;
+        private readonly IMemoryCache _cache;
+        private readonly SiteOptions _options;
 
-        public HomeController(IMessageService messageService, IPeopleApi people, IDataAccess db)
+        public HomeController(IMessageService messageService, IPeopleApi people, IDataAccess db, IOptions<SiteOptions> options, IMemoryCache cache)
         {
+            _options = options.Value;
             _messageService = messageService;
             _people = people;
             _db = db;
+            _cache = cache;
+        }
+
+        private async Task<PcoDataRecord<PcoPeopleHousehold>> GetPrimaryHouse(string personID)
+        {
+            var houses = await _people.FindHouseholds(personID);
+            var primaryHouse = houses.Data.FirstOrDefault(x => x.Attributes.PrimaryContactID == personID);
+
+            if (primaryHouse == null && houses.Data.Count == 1)
+            {
+                primaryHouse = houses.Data.FirstOrDefault();
+            }
+
+            if (primaryHouse != null)
+            {
+                return primaryHouse;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public IActionResult Index()
@@ -36,7 +62,20 @@ namespace WebApplicationBasic.Controllers
             return View();
         }
 
+        [Route("api/Event")]
+        public Task<IEnumerable<EventModel>> GetEvents()
+        {
+            return _db.GetEventList();
+        }
+
+        [Route("api/Event/{id}")]
+        public Task<EventModel> GetEvent(Guid id)
+        {
+            return _db.GetEvent(id);
+        }
+
         [HttpPost]
+        [Route("api/FindEmail")]
         public async Task<IActionResult> FindEmail([FromBody]FindEmailModel model)
         {
             if (!ModelState.IsValid)
@@ -51,9 +90,27 @@ namespace WebApplicationBasic.Controllers
                 return this.NotFound();
             }
 
+            if (this.User.Identity.IsAuthenticated)
+            {
+                if (this.User.HasClaim(x => x.Type == ClaimTypes.Email && x.Value.Equals(model.EmailAddress, StringComparison.OrdinalIgnoreCase)))
+                {
+                    var house = await this.GetPrimaryHouse(this.User.Identity.Name);
+
+                    if (house == null)
+                    {
+                        throw new Exception("There is no household associated with your account.");
+                    }
+
+                    return this.Ok(new {
+                        Verified = true,
+                        HouseholdID = house.ID
+                    });
+                }
+            }
+
             var token = await _db.CreateLoginToken(model.EmailAddress, person.ID);
 
-            await _messageService.SendMessageAsync(model.EmailAddress, "Your verification code", $"Use the code {token.Token} to verify your account.");
+            await _messageService.SendMessageAsync(model.EmailAddress, "Your Verification Code", $"Please use the code {token.Token} to verify your identity with {_options.Name}.");
 
             return this.Ok(new
             {
@@ -62,6 +119,7 @@ namespace WebApplicationBasic.Controllers
         }
 
         [HttpPost]
+        [Route("api/VerifyLoginToken")]
         public async Task<IActionResult> VerifyLoginToken([FromBody]VerifyLoginTokenModel model)
         { 
             var result = await  _db.VerifyLoginToken(model.TokenID, model.Token);
@@ -78,13 +136,7 @@ namespace WebApplicationBasic.Controllers
 
                 await this.HttpContext.Authentication.SignInAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-                var houses = await _people.FindHouseholds(result.PersonID);
-                var primaryHouse = houses.Data.FirstOrDefault(x => x.Attributes.PrimaryContactID == result.PersonID);
-
-                if (primaryHouse == null && houses.Data.Count == 1)
-                {
-                    primaryHouse = houses.Data.FirstOrDefault();
-                }
+                var primaryHouse = await this.GetPrimaryHouse(result.PersonID);
 
                 if (primaryHouse != null)
                 {
@@ -104,21 +156,13 @@ namespace WebApplicationBasic.Controllers
             return this.BadRequest();
         }
 
-        //[Authorize]
-        //public async Task<IActionResult> GetHouseholds()
-        //{
-        //    var personID = this.User.Identity.Name;
-        //    var houses = await _people.FindHouseholds(personID);
-
-        //    return this.Ok(houses);
-        //}
-
         [Authorize]
+        [Route("api/Household/{id}")]
         public async Task<IActionResult> GetHousehold(string id)
         {
-            if (!await this.EnsureHouseholdAccess(id))
+            if (!await this.CurrentUserHasAccessToHousehold(id))
             {
-                return this.StatusCode(403);
+                return this.StatusCode(404);
             }
 
             var house = await _people.GetHousehold(id, includePeople: true);
@@ -158,16 +202,19 @@ namespace WebApplicationBasic.Controllers
                     person.City = address.Attributes.City;
                     person.State = address.Attributes.State;
                     person.Zip = address.Attributes.Zip;
+                    person.AddressID = address.ID;
                 }
 
                 if (phone != null)
                 {
                     person.PhoneNumber = phone.Attributes.Number;
+                    person.PhoneNumberID = phone.ID;
                 }
 
                 if (email != null)
                 {
                     person.EmailAddress = email.Attributes.Address;
+                    person.EmailAddressID = email.ID;
                 }
             }
 
@@ -180,6 +227,7 @@ namespace WebApplicationBasic.Controllers
         }
 
         [HttpPost]
+        [Route("api/CompleteRegistration")]
         public async Task<IActionResult> CompleteRegistration([FromBody]SaveChangesModel model)
         {
             if (model.IsNew)
@@ -199,7 +247,7 @@ namespace WebApplicationBasic.Controllers
             }
             else
             {
-                if (!await this.EnsureHouseholdAccess(model.HouseholdID))
+                if (!await this.CurrentUserHasAccessToHousehold(model.HouseholdID))
                 {
                     return this.StatusCode(403);
                 }
@@ -231,6 +279,35 @@ namespace WebApplicationBasic.Controllers
             }
 
             return this.NoContent();
+        }
+
+        [Route("api/Zip/{zip}")]
+        public async Task<IActionResult> GetZipLocation(string zip)
+        {
+            string cacheKey = $"Zip:${zip}";
+            PcoStreetAddress address;
+
+            if (!_cache.TryGetValue(cacheKey, out address))
+            {
+                var matches = await _people.FindAddressByZipCode(zip);
+                if (matches.Data.Count > 0)
+                {
+                    // Get the city/state most used with this zip code since some are wrong.
+                    address = matches.Data.GroupBy(o => o.Attributes.City).OrderByDescending(o => o.Count()).First().First().Attributes;
+                    _cache.Set(cacheKey, address, DateTimeOffset.Now.AddHours(24));
+                }
+            }
+
+            if (address != null)
+            {
+                return this.Ok(new
+                {
+                    City = address.City,
+                    State = address.State
+                });
+            }
+
+            return this.NotFound();
         }
 
         //[HttpPost]
@@ -307,7 +384,7 @@ namespace WebApplicationBasic.Controllers
         //    return this.Ok();
         //}
 
-        private async Task<bool> EnsureHouseholdAccess(string householdID)
+        private async Task<bool> CurrentUserHasAccessToHousehold(string householdID)
         {
             var personID = this.User.Identity.Name;
             var houses = await _people.FindHouseholds(personID);

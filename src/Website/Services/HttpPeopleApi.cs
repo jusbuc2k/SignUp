@@ -105,7 +105,10 @@ namespace Registration.Services
                 url = string.Concat(this.Url, "/", path);
             }
 
-            var dataJSON = Newtonsoft.Json.JsonConvert.SerializeObject(data);
+            var dataJSON = Newtonsoft.Json.JsonConvert.SerializeObject(data, new Newtonsoft.Json.JsonSerializerSettings()
+            {
+                ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
+            });
 
             var result = await this.Http.PostAsync(url, new StringContent(dataJSON));
 
@@ -121,7 +124,10 @@ namespace Registration.Services
             this.EnsureClient();
             string url = string.Concat(this.Url, "/", path); ;
 
-            var dataJSON = Newtonsoft.Json.JsonConvert.SerializeObject(data);
+            var dataJSON = Newtonsoft.Json.JsonConvert.SerializeObject(data, new Newtonsoft.Json.JsonSerializerSettings()
+            {
+                ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
+            });
 
             var method = new HttpMethod("PATCH");
             var message = new HttpRequestMessage(method, url);
@@ -161,8 +167,9 @@ namespace Registration.Services
 
         public async Task<PcoDataRecord<PcoPeoplePerson>> FindPersonByEmail(string emailAddress)
         {
-            var results = await this.GetListAsync<PcoEmailAddress>($"emails?where[address]={emailAddress}");
+            emailAddress = System.Net.WebUtility.UrlEncode(emailAddress);
 
+            var results = await this.GetListAsync<PcoEmailAddress>($"emails?where[address]={emailAddress}");
             var firstMatch = results.Data.FirstOrDefault();
 
             if (firstMatch != null)
@@ -179,11 +186,14 @@ namespace Registration.Services
 
         public Task<PcoListResponse<PcoPeopleHousehold>> FindHouseholds(string personID)
         {
-           return this.GetListAsync<PcoPeopleHousehold>($"people/{personID}/households");
+            personID = System.Net.WebUtility.UrlEncode(personID);
+            return this.GetListAsync<PcoPeopleHousehold>($"people/{personID}/households");
         }
 
         public Task<PcoSingleResponse<PcoPeopleHousehold>> GetHousehold(string id, bool includePeople = false)
         {
+            id = System.Net.WebUtility.UrlEncode(id);
+
             var query = new StringBuilder();
 
             query.Append($"households/{id}");
@@ -198,16 +208,19 @@ namespace Registration.Services
 
         public Task<PcoListResponse<PcoEmailAddress>> GetEmailsForPerson(string personID)
         {
+            personID = System.Net.WebUtility.UrlEncode(personID);
             return this.GetListAsync<PcoEmailAddress>($"people/{personID}/emails");
         }
 
         public Task<PcoListResponse<PcoPhoneNumber>> GetPhonesForPerson(string personID)
         {
+            personID = System.Net.WebUtility.UrlEncode(personID);
             return this.GetListAsync<PcoPhoneNumber>($"people/{personID}/phone_numbers");
         }
 
         public Task<PcoListResponse<PcoStreetAddress>> GetAddressesForPerson(string personID)
         {
+            personID = System.Net.WebUtility.UrlEncode(personID);
             return this.GetListAsync<PcoStreetAddress>($"people/{personID}/addresses");
         }
 
@@ -215,6 +228,7 @@ namespace Registration.Services
         {
             var emailRecord = await this.GetEmailAddress(emailAddress);
 
+            personID = System.Net.WebUtility.UrlEncode(personID);
 
             if (emailRecord == null)
             {
@@ -249,6 +263,8 @@ namespace Registration.Services
         public async Task<bool> AddOrUpdatePhone(string personID, string phoneNumber)
         {
             var phoneRecord = await this.GetPhoneNumber(phoneNumber);
+
+            personID = System.Net.WebUtility.UrlEncode(personID);
 
             if (phoneRecord == null)
             {
@@ -301,6 +317,8 @@ namespace Registration.Services
         
         public async Task<bool> UpdatePerson(string id, PcoPeoplePerson person, string emailAddress, string phoneNumber)
         {
+            id = System.Net.WebUtility.UrlEncode(id);
+
             await this.PatchAsync<PcoSingleResponse<PcoPeoplePerson>>($"people/{id}", new PcoSingleResponse<PcoPeoplePerson>()
             {
                 Data = new PcoDataRecord<PcoPeoplePerson>()
@@ -347,6 +365,14 @@ namespace Registration.Services
         public Task AddToHousehold(string householdID, string personID)
         {
             throw new NotImplementedException();
+        }
+
+
+        public Task<PcoListResponse<PcoStreetAddress>> FindAddressByZipCode(string zip)
+        {
+            zip = System.Net.WebUtility.UrlEncode(zip);
+
+            return this.GetListAsync<PcoStreetAddress>($"addresses?where[zip]={zip}");
         }
 
         //public async Task<IEnumerable<DataRecord<PcoPeopleHousehold>>> GetHouseholdByEmail(string emailAddress)

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Registration.Models.Data;
 using Microsoft.Extensions.Options;
 using Dapper;
+using Registration.Models;
 
 namespace Registration.Services
 {
@@ -117,6 +118,44 @@ namespace Registration.Services
                 };
             }
         }
+
+        public async Task<IEnumerable<EventModel>> GetEventList()
+        {
+            var connection = await this.EnsureConnection();
+
+            return await connection.QueryAsync<EventModel>(@"
+                SELECT * FROM dbo.Event 
+                WHERE BeginDate < @Now AND EndDate > @Now 
+                ORDER BY [Name]
+            ", new
+            {
+                Now = DateTimeOffset.Now
+            });
+        }
+        
+        public async Task<EventModel> GetEvent(Guid eventID)
+        {
+            var connection = await this.EnsureConnection();
+
+            var evt = await connection.QueryFirstAsync<EventModel>(@"
+                SELECT * FROM dbo.Event 
+                WHERE EventID = @EventID
+            ", new
+            {
+                EventID = eventID
+            });
+
+            evt.Fees = await connection.QueryAsync<EventFee>(@"
+                SELECT * FROM dbo.EventFee 
+                WHERE EventID = @EventID
+            ", new
+            {
+                EventID = eventID
+            });
+
+            return evt;
+        }
+
 
         public void Dispose()
         {
