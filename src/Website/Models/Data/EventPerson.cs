@@ -12,5 +12,9 @@ namespace Registration.Models.Data
         public string PersonID { get; set; }
         
         public string HouseholdID { get; set; }
+
+        public string HouseholdName { get; set; }
+
+        public string Group { get; set; }
     }
 }

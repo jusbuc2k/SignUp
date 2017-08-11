@@ -12,5 +12,12 @@ namespace Registration.Models
         public string HouseholdID { get; set; }
 
         public bool IsNew { get; set; }
+
+        public Guid EventID { get; set; }
+
+
+        public IEnumerable<string> Identifiers { get; set; }
+
+        public string Signature { get; set; }
     }
 }

@@ -1,6 +1,6 @@
 ﻿<template>
     
-    <div if.bind="errorMessage" class="alert alert-warning">
+    <div if.bind="errorMessage" class="alert alert-danger">
         ${errorMessage}
     </div>
 
@@ -16,13 +16,13 @@
         <button type="submit" class="btn btn-primary" click.delegate="findClicked()">Submit</button>
     </form>
 
-    <form if.bind="showLoginForm">
+    <form if.bind="showLoginForm" submit.delegate="verifyCodeClicked()">
         <h2>Welcome Back!</h2>
 
         <p>
-            It looks like you are already in our database. We have sent you an e-mail message
-            in order to confirm your identity. Please check your e-mail, and enter the code
-            you received in the space provided below:
+            It looks like you are already in our database. We just sent you an e-mail message
+            that contains a code you need to enter below to confirm your identity. It may take a
+            few minutes before you receive the message.
         </p>
         <div class="form-group">
             <label for="exampleInputEmail1">Email address</label>
@@ -34,7 +34,7 @@
         </div>
 
         <a href="#" click.delegate="cancelClicked()">Cancel</a>
-        <button type="submit" class="btn btn-primary" click.delegate="confirmClicked()">Submit</button>
+        <button type="submit" class="btn btn-primary" click.delegate="verifyCodeClicked()">Submit</button>
     </form>
 
     <form if.bind="showFirstTimeForm">

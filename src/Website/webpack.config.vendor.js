@@ -32,7 +32,6 @@ module.exports = ({ prod } = {}) => {
                 'aurelia-templating-resources',
                 'aurelia-templating-router',
                 'aurelia-validation',
-                'aurelia-event-aggregator',
                 'bootstrap',
                 'bootstrap/dist/css/bootstrap.css',
                 'jquery',

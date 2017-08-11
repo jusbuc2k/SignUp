@@ -1,0 +1,24 @@
+﻿<template>
+
+    ${description}
+
+    <h3>Registration Costs</h3>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Group</th>
+                <th>Cost</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr repeat.for="fee of fees">
+                <td>${fee.description}</td>
+                <td>$${fee.cost} each</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <a route-href="route: start" class="btn btn-success">Register Now</a>
+
+</template>

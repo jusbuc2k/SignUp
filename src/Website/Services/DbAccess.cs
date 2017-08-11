@@ -56,7 +56,7 @@ namespace Registration.Services
                 BadAttemptCount = 0,
                 EmailAddress = emailAddress,
                 PersonID = personID,
-                ExpiresDateTime = DateTimeOffset.Now.AddMinutes(15)
+                ExpiresDateTime = DateTimeOffset.Now.AddMinutes(30)
             };
 
             var connection = await this.EnsureConnection();
@@ -154,6 +154,16 @@ namespace Registration.Services
             });
 
             return evt;
+        }
+
+        public async Task CreateEventPerson(EventPerson person)
+        {
+            var connection = await this.EnsureConnection();
+
+            await connection.ExecuteAsync(@"
+                INSERT INTO dbo.EventPerson(CreateDateTime,EventID,PersonID,HouseholdID,HouseholdName,FirstName,LastName,Child,BirthDate,Grade,Gender,EmailAddress,PhoneNumber,MedicalNotes,Group)
+                VALUES(SYSDATETIMEOFFSET(),@EventID,@PersonID,@HouseholdID,@HouseholdName,@FirstName,@LastNae,@Child,@BirthDate,@Grade,@Gender,@EmailAddress,@PhoneNumber,@MedicalNotes,@Group)
+            ", person);
         }
 
 

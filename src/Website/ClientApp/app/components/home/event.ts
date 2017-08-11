@@ -19,7 +19,9 @@ export class EventModel {
 
     configureRouter(config: RouterConfiguration, router: Router) {
         config.map([
-            { route: 'start', name: 'start', moduleId: PLATFORM.moduleName("../Register/Start"), title: "First Time" },
+            { route: ['','description'], name: 'description', moduleId: PLATFORM.moduleName("../Register/Description"), title: "Description" },
+
+            { route: 'start', name: 'start', moduleId: PLATFORM.moduleName("../Register/Start"), title: "Get Started" },
             { route: 'family', name: 'family', moduleId: PLATFORM.moduleName("../Register/Family"), title: "Household" },
             { route: 'review', name: 'review', moduleId: PLATFORM.moduleName("../Register/Review"), title: "Review" }
         ]);

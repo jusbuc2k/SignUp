@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Registration.Models.Pco;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Caching.Memory;
+using Registration.Models.Data;
 
 namespace WebApplicationBasic.Controllers
 {
@@ -166,6 +167,9 @@ namespace WebApplicationBasic.Controllers
             }
 
             var house = await _people.GetHousehold(id, includePeople: true);
+            var ids = new List<string>();
+
+            ids.Add(house.Data.ID);
 
             var people = house.GetRelated<PcoPeoplePerson>("people")
                 .Select(s => new Person()
@@ -184,6 +188,8 @@ namespace WebApplicationBasic.Controllers
 
             foreach (var person in people)
             {
+                ids.Add(person.ID);
+
                 if (person.Child)
                 {
                     continue;
@@ -203,23 +209,32 @@ namespace WebApplicationBasic.Controllers
                     person.State = address.Attributes.State;
                     person.Zip = address.Attributes.Zip;
                     person.AddressID = address.ID;
+                    ids.Add(address.ID);
                 }
 
                 if (phone != null)
                 {
                     person.PhoneNumber = phone.Attributes.Number;
                     person.PhoneNumberID = phone.ID;
+                    ids.Add(phone.ID);
                 }
 
                 if (email != null)
                 {
                     person.EmailAddress = email.Attributes.Address;
                     person.EmailAddressID = email.ID;
+                    ids.Add(email.ID);
                 }
             }
 
+            // compute hash so we don't have to verify with the API every time we need to know
+            // if the user has access to the personID/householdID they want to update.
+            var hash = this.GenerateIdentifierHash(ids);
+
             return this.Ok(new
             {
+                Signature = hash,
+                Identifiers = ids,
                 HouseholdID = house.Data.ID,
                 PrimaryContactID = house.Data.Attributes.PrimaryContactID,
                 People = people
@@ -230,10 +245,11 @@ namespace WebApplicationBasic.Controllers
         [Route("api/CompleteRegistration")]
         public async Task<IActionResult> CompleteRegistration([FromBody]SaveChangesModel model)
         {
+            string householdID;
+            var primary = model.People.Single(x => x.IsPrimaryContact);
+            
             if (model.IsNew)
             {
-                var primary = model.People.Single(x => x.IsPrimaryContact);
-
                 foreach (var person in model.People)
                 {
                     var pcoPerson = new PcoPeoplePerson();
@@ -243,39 +259,77 @@ namespace WebApplicationBasic.Controllers
                     person.ID = await _people.CreatePerson(pcoPerson, primary.EmailAddress, primary.PhoneNumber);
                 }
 
-                var householdID = await _people.CreateHousehold(primary.LastName, primary.ID, model.People.Select(s => s.ID));
+                householdID = await _people.CreateHousehold(primary.LastName, primary.ID, model.People.Select(s => s.ID));
             }
             else
             {
-                if (!await this.CurrentUserHasAccessToHousehold(model.HouseholdID))
+                if (!this.User.Identity.IsAuthenticated)
                 {
-                    return this.StatusCode(403);
+                    return this.StatusCode(403, "User Not Authenticated");    
                 }
 
-                var house = await _people.GetHousehold(model.HouseholdID, includePeople: true);
-                var people = house.GetRelated<PcoPeoplePerson>("people");
+                if (!this.VerifyIdentifierHash(model.Identifiers, model.Signature))
+                {
+                    return this.StatusCode(403, "Invalid signature");
+                }
+
+                //var house = await _people.GetHousehold(model.HouseholdID, includePeople: true);
+                //var people = house.GetRelated<PcoPeoplePerson>("people");
+                householdID = model.HouseholdID;
 
                 foreach (var updatedPerson in model.People)
                 {
-                    var existingPerson = people.SingleOrDefault(x => x.ID == updatedPerson.ID);
+                    //var existingPerson = people.SingleOrDefault(x => x.ID == updatedPerson.ID);
+                    PcoPeoplePerson pcoPerson;
 
-                    if (existingPerson == null)
+                    pcoPerson = new PcoPeoplePerson();                   
+
+                    updatedPerson.CopyToPcoPerson(pcoPerson);
+
+                    if (updatedPerson.ID == null)
                     {
-                        existingPerson = new PcoDataRecord<PcoPeoplePerson>()
-                        {
-                            Attributes = new PcoPeoplePerson()
-                        };
-
-                        updatedPerson.CopyToPcoPerson(existingPerson.Attributes);
-
-                        var newPersonID = _people.CreatePerson(existingPerson.Attributes, updatedPerson.EmailAddress, updatedPerson.PhoneNumber);
+                        updatedPerson.ID = await _people.CreatePerson(pcoPerson, updatedPerson.EmailAddress, updatedPerson.PhoneNumber);
+                        await _people.AddToHousehold(model.HouseholdID, updatedPerson.ID);
                     }
+                    else
+                    {
+                        if (!model.Identifiers.Contains(updatedPerson.ID))
+                        {
+                            throw new Exception($"An invalid attempt to update a PersonID {updatedPerson.ID} not in the identifier list was detected.");
+                        }
 
-                    updatedPerson.CopyToPcoPerson(existingPerson.Attributes);
-
-                    await _people.UpdatePerson(existingPerson.ID, existingPerson.Attributes, updatedPerson.EmailAddress, updatedPerson.PhoneNumber);
-                    await _people.AddToHousehold(model.HouseholdID, existingPerson.ID);
+                        await _people.UpdatePerson(updatedPerson.ID, pcoPerson, updatedPerson.EmailAddress, updatedPerson.PhoneNumber);
+                    }
+                    
+                    //TODO: Create/Update Email, Phone, Street
+                    //TODO: Check Email, Phone, Street ID's against id list
                 }
+
+                //TODO: Update household primary contact?
+                //_people.UpdateHouseholdPrimaryContact(model.HouseholdID, primary.ID);
+            }
+
+            foreach (var person in model.People)
+            {
+                await _db.CreateEventPerson(new EventPerson()
+                {
+                    ID = person.ID,
+                    EventID = model.EventID,
+                    HouseholdID = model.HouseholdID,
+                    FirstName = person.FirstName,
+                    LastName = person.LastName,
+                    Child = person.Child,
+                    PhoneNumber = person.PhoneNumber,
+                    EmailAddress = person.EmailAddress,
+                    Street = person.Street,
+                    City = person.City,
+                    State = person.State,
+                    Zip = person.Zip,
+                    Grade = person.Grade,
+                    BirthDate = person.BirthDate,
+                    MedicalNotes = person.MedicalNotes,
+                    Gender = person.Gender
+                });
             }
 
             return this.NoContent();
@@ -395,6 +449,24 @@ namespace WebApplicationBasic.Controllers
             }
 
             return true;
+        }
+
+        private string GenerateIdentifierHash(IEnumerable<string> ids)
+        {
+            var hasher = System.Security.Cryptography.SHA256.Create();
+            var hashMessage = string.Join(",", ids.OrderBy(o => o));
+
+            return Convert.ToBase64String(hasher.ComputeHash(System.Text.UTF8Encoding.UTF8.GetBytes(hashMessage)));
+        }
+
+        private bool VerifyIdentifierHash(IEnumerable<string> ids, string providedHash)
+        {
+            var hasher = System.Security.Cryptography.SHA256.Create();
+            var hashMessage = string.Join(",", ids.OrderBy(o => o));
+            var hash = Convert.ToBase64String(hasher.ComputeHash(System.Text.UTF8Encoding.UTF8.GetBytes(hashMessage)));
+            var providedHashBytes = Convert.FromBase64String(providedHash);
+
+            return hash.Equals(providedHash);
         }
     }
 }

@@ -38,6 +38,10 @@ export class StartModel {
     protected tokenID: string;
     token: string;
 
+    activate(params) {
+
+    }
+
     async findClicked() {
         this.errorMessage = "";
 
@@ -99,7 +103,7 @@ export class StartModel {
         this.router.navigateToRoute("family");
     }
 
-    async confirmClicked() {
+    async verifyCodeClicked() {
         this.errorMessage = "";
 
         let result = await this.http.fetch('/api/VerifyLoginToken', {
@@ -114,9 +118,12 @@ export class StartModel {
         if (result.ok) {
             let data = await result.json();
 
+            this.token = "";
+
             await this.loadAndStart(data.householdID);
         } else {
-            console.error("Invalid token!");
+            this.errorMessage = "Sorry, we couldn't verify the code you entered was correct. Please try again or go back and start over.";
+            this.token = "";            
         }
     }
 

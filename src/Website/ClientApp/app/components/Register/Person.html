@@ -3,14 +3,18 @@
     <form>
         <div class="row">
             <div class="col-sm-6 form-group" validation-errors.bind="firstNameErrors" class.bind="firstNameErrors.length ? 'has-error' : ''">
-                <label class="control-label" for="firstName">First Name</label>
+                <label class="control-label" for="firstName">
+                    ${data.child ? "Child's" : "Adult's"} First Name
+                </label>
                 <input type="email" class="form-control" id="firstName" value.bind="data.firstName & validate">
                 <span class="help-block" repeat.for="errorInfo of firstNameErrors">
                     ${errorInfo.error.message}
                 </span>
             </div>
             <div class="col-sm-6 form-group" validation-errors.bind="lastNameErrors" class.bind="lastNameErrors.length ? 'has-error' : ''">
-                <label class="control-label" for="lastName">Last Name</label>
+                <label class="control-label" for="lastName">
+                    ${data.child ? "Child's" : "Adult's"} Last Name
+                </label>
                 <input type="email" class="form-control" id="lastName" value.bind="data.lastName & validate">
                 <span class="help-block" repeat.for="errorInfo of lastNameErrors">
                     ${errorInfo.error.message}
