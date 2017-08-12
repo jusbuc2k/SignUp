@@ -21,7 +21,9 @@ namespace WebApplicationBasic
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddUserSecrets<Startup>()
+                .AddApplicationInsightsSettings()
                 .AddEnvironmentVariables();
+
             Configuration = builder.Build();
         }
 
@@ -32,6 +34,8 @@ namespace WebApplicationBasic
         {
             services.AddOptions();
             services.AddMemoryCache();
+
+            services.AddApplicationInsightsTelemetry();
 
             services.Configure<Registration.Models.SiteOptions>(this.Configuration.GetSection("SiteOptions"));
             services.Configure<Registration.Services.HttpPeopleApiOptions>(this.Configuration.GetSection("PcoApi"));
