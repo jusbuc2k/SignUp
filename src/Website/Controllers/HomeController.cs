@@ -73,8 +73,6 @@ namespace WebApplicationBasic.Controllers
         [Route("api/Event/{id}")]
         public async Task<EventModel> GetEvent(Guid id)
         {
-            await Task.Delay(5000);
-
             return await _db.GetEvent(id);
         }
 
