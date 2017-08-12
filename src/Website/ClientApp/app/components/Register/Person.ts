@@ -29,6 +29,10 @@ export class PersonModel {
     http: HttpClient;
     canDelete: boolean = false;
 
+    get addressChanged() {
+        return JSON.stringify(this.orig) != JSON.stringify(this.data);
+    }
+
     data: Person;
     orig: Person;
 
@@ -46,7 +50,7 @@ export class PersonModel {
     ];
 
     gradeOptions = [
-        { value: null, text: "[None]" },
+        { value: "", text: "[None]" },
         { value: -1, text: "Pre-K" },
         { value: 0, text: "Kindergarten" },
         { value: 1, text: "1st" },

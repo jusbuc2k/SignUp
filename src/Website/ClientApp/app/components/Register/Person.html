@@ -24,7 +24,7 @@
 
         <div if.bind="!data.child">
             <div class="checkbox">
-                <label><input type="checkbox" checked.bind="data.isPrimaryContact" /> This is the primary contact for household</label>
+                <label><input type="checkbox" checked.bind="data.isPrimaryContact" /> Primary Contact</label>
             </div>
 
             <div class="form-group" validation-errors.bind="emailAddressErrors" class.bind="emailAddressErrors.length ? 'has-error' : ''">
@@ -41,38 +41,6 @@
                 <span class="help-block" repeat.for="errorInfo of phoneNumberErrors">
                     ${errorInfo.error.message}
                 </span>
-            </div>
-
-            <div class="form-group" validation-errors.bind="streetErrors" class.bind="streetErrors.length ? 'has-error' : ''">
-                <label class="control-label" for="streetAddress">Street</label>
-                <textarea class="form-control" id="streetAddress" value.bind="data.street & validate"></textarea>
-                <span class="help-block" repeat.for="errorInfo of streetErrors">
-                    ${errorInfo.error.message}
-                </span>
-            </div>
-
-            <div class="row">
-                <div class="col-sm-4 form-group" validation-errors.bind="zipErrors" class.bind="zipErrors.length ? 'has-error' : ''">
-                    <label class="control-label" for="addressZip">ZIP</label>
-                    <input type="text" class="form-control" id="addressZip" value.bind="data.zip & validate" change.delegate="zipChanged()">
-                    <span class="help-block" repeat.for="errorInfo of zipErrors">
-                        ${errorInfo.error.message}
-                    </span>
-                </div>
-                <div class="col-sm-4 form-group" validation-errors.bind="cityErrors" class.bind="cityErrors.length ? 'has-error' : ''">
-                    <label class="control-label" for="addressCity">City</label>
-                    <input type="text" class="form-control" id="addressCity" value.bind="data.city & validate">
-                    <span class="help-block" repeat.for="errorInfo of cityErrors">
-                        ${errorInfo.error.message}
-                    </span>
-                </div>
-                <div class="col-sm-2 form-group" validation-errors.bind="stateErrors" class.bind="stateErrors.length ? 'has-error' : ''">
-                    <label class="control-label" for="addressState">State</label>
-                    <input type="text" class="form-control" id="addressState" value.bind="data.state & validate">
-                    <span class="help-block" repeat.for="errorInfo of stateErrors">
-                        ${errorInfo.error.message}
-                    </span>
-                </div>
             </div>
         </div>
 
@@ -109,6 +77,42 @@
                     ${errorInfo.error.message}
                 </span>
             </div>
+        </div>
+
+        <div class="form-group" validation-errors.bind="streetErrors" class.bind="streetErrors.length ? 'has-error' : ''">
+            <label class="control-label" for="streetAddress">Street</label>
+            <textarea class="form-control" id="streetAddress" value.bind="data.street & validate"></textarea>
+            <span class="help-block" repeat.for="errorInfo of streetErrors">
+                ${errorInfo.error.message}
+            </span>
+        </div>
+
+        <div class="row">
+            <div class="col-sm-4 form-group" validation-errors.bind="zipErrors" class.bind="zipErrors.length ? 'has-error' : ''">
+                <label class="control-label" for="addressZip">ZIP</label>
+                <input type="text" class="form-control" id="addressZip" value.bind="data.zip & validate" change.delegate="zipChanged()" maxlength="6">
+                <span class="help-block" repeat.for="errorInfo of zipErrors">
+                    ${errorInfo.error.message}
+                </span>
+            </div>
+            <div class="col-sm-4 form-group" validation-errors.bind="cityErrors" class.bind="cityErrors.length ? 'has-error' : ''">
+                <label class="control-label" for="addressCity">City</label>
+                <input type="text" class="form-control" id="addressCity" value.bind="data.city & validate" maxlength="50">
+                <span class="help-block" repeat.for="errorInfo of cityErrors">
+                    ${errorInfo.error.message}
+                </span>
+            </div>
+            <div class="col-sm-2 form-group" validation-errors.bind="stateErrors" class.bind="stateErrors.length ? 'has-error' : ''">
+                <label class="control-label" for="addressState">State</label>
+                <input type="text" class="form-control" id="addressState" value.bind="data.state & validate" maxlength="2">
+                <span class="help-block" repeat.for="errorInfo of stateErrors">
+                    ${errorInfo.error.message}
+                </span>
+            </div>            
+        </div>
+
+        <div class="checkbox" if.bind="addressChanged && data.isPrimaryContact">
+            <label><input type="checkbox" checked.bind="data.cascadeAddress" /> Update all household members to match new address.</label>
         </div>
 
         <div class="row">

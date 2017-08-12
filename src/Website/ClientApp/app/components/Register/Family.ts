@@ -21,10 +21,17 @@ export class FamilyModel {
         this.subscriptions.push(eventAggregator.subscribe("Person_Updated", (data) => {
             if (this.people.indexOf(data) < 0) {
                 this.people.push(data);
-            }            
+            }
 
             if (data.isPrimaryContact) {
                 this.people.forEach(p => {
+                    if (p !== data && data["cascadeAddress"]) {
+                        p.street = data.street;
+                        p.city = data.city;
+                        p.state = data.state;
+                        p.zip = data.zip;
+                    }
+
                     if (p !== data) {
                         p.isPrimaryContact = false;
                     }
@@ -59,8 +66,19 @@ export class FamilyModel {
     }
 
     addPerson(isChild: boolean) {
+        let primary = this.people.find(x => x.isPrimaryContact);
         let p = new Person();
+
         p.child = isChild;
+
+        if (primary) {
+            p.lastName = primary.lastName;
+            p.street = primary.street;
+            p.city = primary.city;
+            p.state = primary.state;
+            p.zip = primary.zip;
+        }
+
         this.selectedPerson = p;
     }
 
