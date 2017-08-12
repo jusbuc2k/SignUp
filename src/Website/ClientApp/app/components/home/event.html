@@ -1,4 +1,13 @@
 <template>
-    <h2>${event.name}</h2>
-    <router-view class="${router.isNavigating ? 'navigating' : ''}"></router-view>
+    <div class="row event-header">
+        <div class="col-xs-6">
+            <h2>${event.name}</h2>
+            <small if.bind="event.supportInfo" innerHtml.bind="event.supportInfo"></small>
+        </div>
+        <div class="col-xs-6 text-right">
+            <img if.bind="event.logoUrl" src.bind="event.logoUrl" class="event-logo" />
+        </div>
+    </div>
+    
+    <router-view></router-view>
 </template>

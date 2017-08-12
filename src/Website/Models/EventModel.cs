@@ -13,6 +13,8 @@ namespace Registration.Models
 
         public string Description { get; set; }
 
+        public string LongDescription { get; set; }
+
         public string PaymentInstructions { get; set; }
 
         public string ConfirmationMessage { get; set; }
@@ -24,5 +26,7 @@ namespace Registration.Models
         public DateTimeOffset EndDateTime { get; set; }
 
         public IEnumerable<EventFee> Fees { get; set; }
+
+        public string SupportInfo { get; set; }
     }
 }

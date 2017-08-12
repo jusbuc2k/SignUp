@@ -11,12 +11,12 @@ export class StartModel {
     ) {
     }
 
-    description: string;
+    longDescription: string;
     name: string;
     fees: any[];
 
     activate(params) {
-        this.description = this.eventModel.event.description;
+        this.longDescription = this.eventModel.event.longDescription;
         this.name = this.eventModel.event.name;
         this.fees = this.eventModel.event.fees;
     }
