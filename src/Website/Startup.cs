@@ -35,7 +35,7 @@ namespace WebApplicationBasic
             services.AddOptions();
             services.AddMemoryCache();
 
-            services.AddApplicationInsightsTelemetry();
+            services.AddApplicationInsightsTelemetry(Configuration);
 
             services.Configure<Registration.Models.SiteOptions>(this.Configuration.GetSection("SiteOptions"));
             services.Configure<Registration.Services.HttpPeopleApiOptions>(this.Configuration.GetSection("PcoApi"));
