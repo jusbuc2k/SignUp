@@ -472,7 +472,7 @@ namespace WebApplicationBasic.Controllers
                 });
             }
 
-            await this.HttpContext.Authentication.SignOutAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
+            //await this.HttpContext.Authentication.SignOutAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
 
             if (!string.IsNullOrEmpty(_options.NotifyEmail))
             {
