@@ -41,7 +41,7 @@ export class PersonModel {
         this.data = Object.assign(new Person(), data);
         this.validation.reset();
 
-        this.canDelete = (data.personID == null);
+        this.canDelete = (data.personID == null && !data.isPrimaryContact);
     }
 
     genderOptions = [

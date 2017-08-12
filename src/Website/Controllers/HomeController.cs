@@ -189,11 +189,6 @@ namespace WebApplicationBasic.Controllers
             {
                 ids.Add(person.PersonID);
 
-                if (person.Child)
-                {
-                    continue;
-                }
-
                 var emails = await _people.GetEmailsForPerson(person.PersonID);
                 var phones = await _people.GetPhonesForPerson(person.PersonID);
                 var addresses = await _people.GetAddressesForPerson(person.PersonID);
