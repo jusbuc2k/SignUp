@@ -429,16 +429,25 @@ namespace WebApplicationBasic.Controllers
             var notifyMessage = new StringBuilder();
 
             notifyMessage.AppendLine($"A new registration for '{model.HouseholdName}' to event {model.EventID} was submitted.").AppendLine();
-            notifyMessage.AppendLine("-- Registered Persons -- ");
+            notifyMessage.AppendLine("*** Registered Persons ***");
 
             foreach (var person in model.People)
             {
+                //TODO: Deal with person being selected or not.
+                //if (!person.Selected)
+                //{
+                //    continue;
+                //}
+
                 if (await _db.GetEventPerson(model.EventID, person.PersonID) != null)
                 {
                     continue;
                 }
 
-                notifyMessage.AppendLine($" - {person.FirstName} {person.LastName}");
+                if (person.Selected)
+                {
+                    notifyMessage.AppendLine($" - {person.FirstName} {person.LastName}");
+                }
 
                 await _db.CreateEventPerson(new EventPerson()
                 {
@@ -458,7 +467,8 @@ namespace WebApplicationBasic.Controllers
                     Grade = person.Grade,
                     BirthDate = person.BirthDate,
                     MedicalNotes = person.MedicalNotes,
-                    Gender = person.Gender
+                    Gender = person.Gender,
+                    Group = person.Selected ? "Selected" : null
                 });
             }
 

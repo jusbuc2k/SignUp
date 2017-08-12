@@ -77,12 +77,13 @@ export class FamilyModel {
         }
 
         this.errors.splice(0, this.errors.length);
-        this.inProgress = true;
 
         if (this.people.every(x => !x["selected"])) {
             this.errors.push("At least one person must be selected to register.");
             return;
         }
+
+        this.inProgress = true;
 
         try {
             let result = await this.http.fetch("/api/CompleteRegistration", {

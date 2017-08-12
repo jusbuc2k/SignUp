@@ -55,7 +55,7 @@
                 <div class="col-sm-4 form-group" validation-errors.bind="zipErrors" class.bind="zipErrors.length ? 'has-error' : ''">
                     <label class="control-label" for="addressZip">ZIP</label>
                     <input type="text" class="form-control" id="addressZip" value.bind="data.zip & validate" change.delegate="zipChanged()">
-                    <span class="help-block" repeat.for="errorInfo of zipCErrors">
+                    <span class="help-block" repeat.for="errorInfo of zipErrors">
                         ${errorInfo.error.message}
                     </span>
                 </div>

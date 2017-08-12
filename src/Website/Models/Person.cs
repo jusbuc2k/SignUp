@@ -46,6 +46,8 @@ namespace Registration.Models
 
         public string AddressID { get; set; }
 
+        public bool Selected { get; set; }
+
         public void CopyToPcoPerson(Pco.PcoPeoplePerson person)
         {
             person.FirstName = this.FirstName;
