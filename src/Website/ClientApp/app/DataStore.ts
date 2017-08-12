@@ -33,7 +33,7 @@ export class DataStore {
 }
 
 export interface IHousehold {
-    id: string;
+    id?: string;
     people: any[];
     new?: boolean;
 }

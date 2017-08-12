@@ -21,11 +21,19 @@ namespace Registration.Services
 
         Task<PcoListResponse<PcoStreetAddress>> GetAddressesForPerson(string personID);
 
-        Task<string> CreatePerson(PcoPeoplePerson person, string emailAddress, string phoneNumber);
+        Task<string> CreatePerson(PcoPeoplePerson person);
 
-        Task<bool> UpdatePerson(string id, PcoPeoplePerson person, string emailAddress, string phoneNumber);
+        Task<bool> UpdatePerson(string id, PcoPeoplePerson person);
+
+        Task<PcoDataRecord<PcoEmailAddress>> AddOrUpdateEmail(string personID, PcoDataRecord<PcoEmailAddress> emailAddress);
+
+        Task<PcoDataRecord<PcoPhoneNumber>> AddOrUpdatePhone(string personID, PcoDataRecord<PcoPhoneNumber> phoneNumber);
+
+        Task<PcoDataRecord<PcoStreetAddress>> AddOrUpdateAddress(string personID, PcoDataRecord<PcoStreetAddress> streetAddress);
 
         Task<string> CreateHousehold(string name, string primaryContactID, IEnumerable<string> memberIDs);
+
+        Task UpdateHousehold(string id, string name, string primaryContactID);
 
         Task AddToHousehold(string householdID, string personID);
 

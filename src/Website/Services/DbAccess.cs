@@ -161,9 +161,22 @@ namespace Registration.Services
             var connection = await this.EnsureConnection();
 
             await connection.ExecuteAsync(@"
-                INSERT INTO dbo.EventPerson(CreateDateTime,EventID,PersonID,HouseholdID,HouseholdName,FirstName,LastName,Child,BirthDate,Grade,Gender,EmailAddress,PhoneNumber,MedicalNotes,Group)
-                VALUES(SYSDATETIMEOFFSET(),@EventID,@PersonID,@HouseholdID,@HouseholdName,@FirstName,@LastNae,@Child,@BirthDate,@Grade,@Gender,@EmailAddress,@PhoneNumber,@MedicalNotes,@Group)
+                INSERT INTO dbo.EventPerson(CreateDateTime,EventID,PersonID,HouseholdID,HouseholdName,FirstName,LastName,Child,BirthDate,Grade,Gender,EmailAddress,PhoneNumber,MedicalNotes,[Group])
+                VALUES(SYSDATETIMEOFFSET(),@EventID,@PersonID,@HouseholdID,@HouseholdName,@FirstName,@LastName,@Child,@BirthDate,@Grade,@Gender,@EmailAddress,@PhoneNumber,@MedicalNotes,@Group)
             ", person);
+        }
+
+        public async Task<EventPerson> GetEventPerson(Guid eventID, string personID)
+        {
+            var connection = await this.EnsureConnection();
+
+            return await connection.QuerySingleOrDefaultAsync<EventPerson>(@"
+                SELECT * FROM dbo.EventPerson WHERE EventID = @EventID AND PersonID = @PersonID
+            ", new
+            {
+                EventID = eventID,
+                PersonID = personID
+            });
         }
 
 

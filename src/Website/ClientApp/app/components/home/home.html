@@ -1,8 +1,8 @@
 <template>
     <h1>Events</h1>
     <p>Choose from the events listed below to start a new registration:</p>
-    <ul class="list-group">
-        <li repeat.for="event of events" class="list-group-item">
+    <ul class="list-group event-list">
+        <li repeat.for="event of events" class="list-group-item" click.delegate="eventClicked(event.eventID)">
             <a href="#/event/${event.eventID}">
                 ${event.name}                
             </a>

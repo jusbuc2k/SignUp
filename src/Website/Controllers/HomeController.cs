@@ -12,6 +12,7 @@ using Registration.Models.Pco;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Caching.Memory;
 using Registration.Models.Data;
+using System.Text;
 
 namespace WebApplicationBasic.Controllers
 {
@@ -70,9 +71,11 @@ namespace WebApplicationBasic.Controllers
         }
 
         [Route("api/Event/{id}")]
-        public Task<EventModel> GetEvent(Guid id)
+        public async Task<EventModel> GetEvent(Guid id)
         {
-            return _db.GetEvent(id);
+            await Task.Delay(5000);
+
+            return await _db.GetEvent(id);
         }
 
         [HttpPost]
@@ -95,16 +98,8 @@ namespace WebApplicationBasic.Controllers
             {
                 if (this.User.HasClaim(x => x.Type == ClaimTypes.Email && x.Value.Equals(model.EmailAddress, StringComparison.OrdinalIgnoreCase)))
                 {
-                    var house = await this.GetPrimaryHouse(this.User.Identity.Name);
-
-                    if (house == null)
-                    {
-                        throw new Exception("There is no household associated with your account.");
-                    }
-
                     return this.Ok(new {
-                        Verified = true,
-                        HouseholdID = house.ID
+                        Verified = true
                     });
                 }
             }
@@ -135,38 +130,44 @@ namespace WebApplicationBasic.Controllers
 
                 var principal = new System.Security.Claims.ClaimsPrincipal(identity);
 
-                await this.HttpContext.Authentication.SignInAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, principal);
-
-                var primaryHouse = await this.GetPrimaryHouse(result.PersonID);
-
-                if (primaryHouse != null)
+                await this.HttpContext.Authentication.SignInAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, principal, new Microsoft.AspNetCore.Http.Authentication.AuthenticationProperties()
                 {
-                    return this.Ok(new
-                    {
-                        PersonID = result.PersonID,
-                        EmailAddress = result.EmailAddress,
-                        HouseholdID = primaryHouse.ID
-                    });
-                }
-                else
+                    IsPersistent = false,
+                    AllowRefresh = true,
+                    IssuedUtc = DateTimeOffset.Now,
+                    ExpiresUtc = DateTimeOffset.Now.AddMinutes(90)
+                });
+
+                return this.Ok(new
                 {
-                    throw new Exception("There is no household associated with your account.");
-                }              
+                    PersonID = result.PersonID,
+                    EmailAddress = result.EmailAddress
+                });
             }
 
             return this.BadRequest();
         }
 
         [Authorize]
-        [Route("api/Household/{id}")]
-        public async Task<IActionResult> GetHousehold(string id)
+        [HttpPost]
+        [Route("api/GetOrCreateHouse")]
+        public async Task<IActionResult> GetOrCreateHouse()
         {
-            if (!await this.CurrentUserHasAccessToHousehold(id))
+            var primaryHouse = await this.GetPrimaryHouse(this.User.Identity.Name);
+            
+            string houseID;
+
+            if (primaryHouse == null)
             {
-                return this.StatusCode(404);
+                var email = this.User.FindFirst(ClaimTypes.Email).Value;
+                houseID = await _people.CreateHousehold(email, this.User.Identity.Name, new string[] { this.User.Identity.Name });
+            }
+            else
+            {
+                houseID = primaryHouse.ID;
             }
 
-            var house = await _people.GetHousehold(id, includePeople: true);
+            var house = await _people.GetHousehold(houseID, includePeople: true);
             var ids = new List<string>();
 
             ids.Add(house.Data.ID);
@@ -174,7 +175,7 @@ namespace WebApplicationBasic.Controllers
             var people = house.GetRelated<PcoPeoplePerson>("people")
                 .Select(s => new Person()
                 {
-                    ID = s.ID,
+                    PersonID = s.ID,
                     FirstName = s.Attributes.FirstName,
                     LastName = s.Attributes.LastName,
                     BirthDate = s.Attributes.BirthDate,
@@ -188,16 +189,16 @@ namespace WebApplicationBasic.Controllers
 
             foreach (var person in people)
             {
-                ids.Add(person.ID);
+                ids.Add(person.PersonID);
 
                 if (person.Child)
                 {
                     continue;
                 }
 
-                var emails = await _people.GetEmailsForPerson(person.ID);
-                var phones = await _people.GetPhonesForPerson(person.ID);
-                var addresses = await _people.GetAddressesForPerson(person.ID);
+                var emails = await _people.GetEmailsForPerson(person.PersonID);
+                var phones = await _people.GetPhonesForPerson(person.PersonID);
+                var addresses = await _people.GetAddressesForPerson(person.PersonID);
                 var address = addresses.Data.Count == 1 ? addresses.Data.FirstOrDefault() : addresses.Data.FirstOrDefault(x => x.Attributes.Primary);
                 var email = emails.Data.Count == 1 ? emails.Data.FirstOrDefault() : emails.Data.FirstOrDefault(x => x.Attributes.Primary);
                 var phone = phones.Data.Count == 1 ? phones.Data.FirstOrDefault() : phones.Data.FirstOrDefault(x => x.Attributes.Location == "Mobile");
@@ -236,30 +237,148 @@ namespace WebApplicationBasic.Controllers
                 Signature = hash,
                 Identifiers = ids,
                 HouseholdID = house.Data.ID,
+                HouseholdName = house.Data.Attributes.Name,
                 PrimaryContactID = house.Data.Attributes.PrimaryContactID,
                 People = people
             });
+        }
+
+        protected async Task<string> CreatePerson(Person person)
+        {
+            var pcoPerson = new PcoPeoplePerson();
+
+            person.CopyToPcoPerson(pcoPerson);
+
+            var personID = await _people.CreatePerson(pcoPerson);
+            
+            if (person.EmailAddress != null)
+            {
+                await _people.AddOrUpdateEmail(personID, new PcoDataRecord<PcoEmailAddress>()
+                {
+                    Type = "email",
+                    Attributes = new PcoEmailAddress()
+                    {
+                        Address = person.EmailAddress,
+                        Location = "Home",
+                        Primary = true
+                    }
+                });
+            }
+
+            if (person.PhoneNumber != null)
+            {
+                await _people.AddOrUpdatePhone(personID, new PcoDataRecord<PcoPhoneNumber>()
+                {
+                    Type = "phone_number",
+                    Attributes = new PcoPhoneNumber(){
+                        Number = person.PhoneNumber,
+                        Location = "Mobile",
+                        Primary = true
+                    }
+                });
+            }
+
+            if (person.Street != null)
+            {
+                await _people.AddOrUpdateAddress(personID, new PcoDataRecord<PcoStreetAddress>()
+                {
+                    Type="street_address",
+                    Attributes = new PcoStreetAddress()
+                    {
+                        Street = person.Street,
+                        City = person.City,
+                        State = person.State,
+                        Zip = person.Zip,
+                        Location = "Home",
+                        Primary = true
+                    }
+                });
+            }
+
+            return personID;
+        }
+
+        protected async Task UpdatePerson(Person person)
+        {
+            var pcoPerson = new PcoPeoplePerson();
+
+            person.CopyToPcoPerson(pcoPerson);
+
+            await _people.UpdatePerson(person.PersonID, pcoPerson);
+
+            if (person.EmailAddress != null)
+            {
+                await _people.AddOrUpdateEmail(person.PersonID, new PcoDataRecord<PcoEmailAddress>()
+                {
+                    Type = "email",
+                    ID = person.EmailAddressID,
+                    Attributes = new PcoEmailAddress()
+                    {
+                        Address = person.EmailAddress,
+                        Location = "Home",
+                        Primary = true
+                    }
+                });
+            }
+
+            if (person.PhoneNumber != null)
+            {
+                await _people.AddOrUpdatePhone(person.PersonID, new PcoDataRecord<PcoPhoneNumber>()
+                {
+                    Type = "phone_number",
+                    ID = person.PhoneNumberID,
+                    Attributes = new PcoPhoneNumber()
+                    {
+                        Number = person.PhoneNumber,
+                        Location = "Mobile",
+                        Primary = true
+                    }
+                });
+            }
+
+            if (person.Street != null)
+            {
+                await _people.AddOrUpdateAddress(person.PersonID, new PcoDataRecord<PcoStreetAddress>()
+                {
+                    Type = "street_address",
+                    ID = person.AddressID,
+                    Attributes = new PcoStreetAddress()
+                    {
+                        Street = person.Street,
+                        City = person.City,
+                        State = person.State,
+                        Zip = person.Zip,
+                        Location = "Home",
+                        Primary = true
+                    }
+                });
+            }
         }
 
         [HttpPost]
         [Route("api/CompleteRegistration")]
         public async Task<IActionResult> CompleteRegistration([FromBody]SaveChangesModel model)
         {
-            string householdID;
             var primary = model.People.Single(x => x.IsPrimaryContact);
+
+            if (string.IsNullOrEmpty(model.HouseholdName))
+            {
+                model.HouseholdName = $"{primary.LastName} Household";
+            }            
+
+            if (model.EventID == Guid.Empty)
+            {
+                return this.BadRequest("An EventID is required.");
+            }
             
-            if (model.IsNew)
+            if (model.HouseholdID == null)
             {
                 foreach (var person in model.People)
                 {
-                    var pcoPerson = new PcoPeoplePerson();
-
-                    person.CopyToPcoPerson(pcoPerson);
-
-                    person.ID = await _people.CreatePerson(pcoPerson, primary.EmailAddress, primary.PhoneNumber);
+                    person.PersonID = await this.CreatePerson(person);
                 }
 
-                householdID = await _people.CreateHousehold(primary.LastName, primary.ID, model.People.Select(s => s.ID));
+                model.HouseholdID = await _people.CreateHousehold(model.HouseholdName, primary.PersonID, model.People.Select(s => s.PersonID));
             }
             else
             {
@@ -273,49 +392,62 @@ namespace WebApplicationBasic.Controllers
                     return this.StatusCode(403, "Invalid signature");
                 }
 
-                //var house = await _people.GetHousehold(model.HouseholdID, includePeople: true);
-                //var people = house.GetRelated<PcoPeoplePerson>("people");
-                householdID = model.HouseholdID;
-
                 foreach (var updatedPerson in model.People)
                 {
-                    //var existingPerson = people.SingleOrDefault(x => x.ID == updatedPerson.ID);
-                    PcoPeoplePerson pcoPerson;
-
-                    pcoPerson = new PcoPeoplePerson();                   
-
-                    updatedPerson.CopyToPcoPerson(pcoPerson);
-
-                    if (updatedPerson.ID == null)
+                    if (updatedPerson.PersonID == null)
                     {
-                        updatedPerson.ID = await _people.CreatePerson(pcoPerson, updatedPerson.EmailAddress, updatedPerson.PhoneNumber);
-                        await _people.AddToHousehold(model.HouseholdID, updatedPerson.ID);
+                        updatedPerson.PersonID = await this.CreatePerson(updatedPerson);
+                        await _people.AddToHousehold(model.HouseholdID, updatedPerson.PersonID);
                     }
                     else
                     {
-                        if (!model.Identifiers.Contains(updatedPerson.ID))
+                        if (!model.Identifiers.Contains(updatedPerson.PersonID))
                         {
-                            throw new Exception($"An invalid attempt to update a PersonID {updatedPerson.ID} not in the identifier list was detected.");
+                            throw new Exception($"An invalid attempt to update a PersonID {updatedPerson.PersonID} not in the identifier list was detected.");
                         }
 
-                        await _people.UpdatePerson(updatedPerson.ID, pcoPerson, updatedPerson.EmailAddress, updatedPerson.PhoneNumber);
+                        if (updatedPerson.EmailAddressID != null && !model.Identifiers.Contains(updatedPerson.EmailAddressID))
+                        {
+                            throw new Exception($"An invalid attempt to update an Email Address ID {updatedPerson.EmailAddressID} not in the identifier list was detected.");
+                        }
+
+                        if (updatedPerson.PhoneNumberID != null && !model.Identifiers.Contains(updatedPerson.PhoneNumberID))
+                        {
+                            throw new Exception($"An invalid attempt to update an Phone Number ID {updatedPerson.PhoneNumberID} not in the identifier list was detected.");
+                        }
+
+                        if (updatedPerson.AddressID != null && !model.Identifiers.Contains(updatedPerson.AddressID))
+                        {
+                            throw new Exception($"An invalid attempt to update an Address ID {updatedPerson.AddressID} not in the identifier list was detected.");
+                        }
+
+                        await this.UpdatePerson(updatedPerson);
                     }
-                    
-                    //TODO: Create/Update Email, Phone, Street
-                    //TODO: Check Email, Phone, Street ID's against id list
                 }
 
-                //TODO: Update household primary contact?
-                //_people.UpdateHouseholdPrimaryContact(model.HouseholdID, primary.ID);
+                await _people.UpdateHousehold(model.HouseholdID, model.HouseholdName, primary.PersonID);
             }
+
+            var notifyMessage = new StringBuilder();
+
+            notifyMessage.AppendLine($"A new registration for '{model.HouseholdName}' to event {model.EventID} was submitted.").AppendLine();
+            notifyMessage.AppendLine("-- Registered Persons -- ");
 
             foreach (var person in model.People)
             {
+                if (await _db.GetEventPerson(model.EventID, person.PersonID) != null)
+                {
+                    continue;
+                }
+
+                notifyMessage.AppendLine($" - {person.FirstName} {person.LastName}");
+
                 await _db.CreateEventPerson(new EventPerson()
                 {
-                    ID = person.ID,
+                    PersonID = person.PersonID,
                     EventID = model.EventID,
                     HouseholdID = model.HouseholdID,
+                    HouseholdName = model.HouseholdName,
                     FirstName = person.FirstName,
                     LastName = person.LastName,
                     Child = person.Child,
@@ -331,6 +463,13 @@ namespace WebApplicationBasic.Controllers
                     Gender = person.Gender
                 });
             }
+
+            await this.HttpContext.Authentication.SignOutAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
+
+            if (!string.IsNullOrEmpty(_options.NotifyEmail))
+            {
+                await _messageService.SendMessageAsync(_options.NotifyEmail, "New Registration", notifyMessage.ToString());
+            }           
 
             return this.NoContent();
         }

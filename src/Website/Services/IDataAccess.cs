@@ -18,5 +18,7 @@ namespace Registration.Services
         Task<VerifyLoginTokenResult> VerifyLoginToken(Guid tokenID, string token);
 
         Task CreateEventPerson(EventPerson person);
+
+        Task<EventPerson> GetEventPerson(Guid eventID, string personID);
     }
 }

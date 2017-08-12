@@ -1,4 +1,4 @@
 <template>
-    <h1>${event.name}</h1>
-    <router-view></router-view>
+    <h2>${event.name}</h2>
+    <router-view class="${router.isNavigating ? 'navigating' : ''}"></router-view>
 </template>

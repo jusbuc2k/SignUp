@@ -18,18 +18,6 @@ export class PersonModel {
         this.validation.validateTrigger = validateTrigger.change;
         this.eventAggregator = eventAggregator;
         this.http = http;
-        //observer.getObserver(this.data, "zip").subscribe(async (newValue, oldValue) => {
-        //    if (newValue != oldValue) {
-        //        let response = await http.fetch(`Home/GetZipLocation/${newValue}`);
-
-        //        if (response.ok) {
-        //            let loc = await response.json();
-
-        //            this.data.city = loc.city;
-        //            this.data.state = loc.state;
-        //        }
-        //    }
-        //});
     }
 
     determineActivationStrategy() {
@@ -39,6 +27,7 @@ export class PersonModel {
     validation: ValidationController;
     eventAggregator: EventAggregator;
     http: HttpClient;
+    canDelete: boolean = false;
 
     data: Person;
     orig: Person;
@@ -47,6 +36,8 @@ export class PersonModel {
         this.orig = data;
         this.data = Object.assign(new Person(), data);
         this.validation.reset();
+
+        this.canDelete = (data.personID == null);
     }
 
     genderOptions = [
@@ -78,6 +69,10 @@ export class PersonModel {
         this.eventAggregator.publish("Person_Updated", this.orig);
     }
 
+    deleteClicked() {
+        this.eventAggregator.publish("Person_Deleted", this.orig);
+    }
+
     cancelClicked() {
         this.eventAggregator.publish("Person_Cancel", this.orig);
     }
@@ -95,7 +90,7 @@ export class PersonModel {
 }
 
 export class Person {
-    id: string;
+    personID: string;
     firstName: string;
     lastName: string;
     child: boolean;

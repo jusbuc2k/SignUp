@@ -19,4 +19,8 @@ export class Home {
         this.events = await response.json();
     }
 
+    eventClicked(eventID) {
+        this.router.navigateToRoute("event", { id: eventID });
+    }
+
 }

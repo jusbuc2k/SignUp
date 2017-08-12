@@ -1,9 +1,9 @@
 ﻿<template>
     <require from="./Family.css"></require>
 
-    <h2>
-        Update Family Information
-    </h2>
+    <h1>
+       Information Update
+    </h1>
 
     <p>
         To complete your registration, please ensure that all the members of your household
@@ -36,11 +36,11 @@
                     You have ${people.length} people in your household.
                 </p>
                 <p>
-                    <button class="btn btn-default" click.delegate="addPerson(true)">
-                        <i class="fa fa-child"></i> Add Child
+                    <button class="btn btn-info" click.delegate="addPerson(true)">
+                        <i class="fa fa-child"></i> Add a Child
                     </button>
-                    <button class="btn btn-default" click.delegate="addPerson(false)">
-                        <i class="fa fa-user"></i> Add Adult
+                    <button class="btn btn-info" click.delegate="addPerson(false)">
+                        <i class="fa fa-user"></i> Add an Adult
                     </button>
                 </p>
             </div>
@@ -51,6 +51,7 @@
     </div>
 
     <p class="text-right" if.bind="!selectedPerson">
+        <a route-href="route: start">Cancel</a>&nbsp;
         <button class="btn btn-success" click.delegate="nextClicked()">Next Step</button>
     </p>
     

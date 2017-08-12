@@ -5,7 +5,7 @@
     </div>
 
     <form if.bind="showEmailSearchForm" submit.delegate="findClicked()">
-        <h2>Get Started</h2>
+        <h1>Get Started</h1>
 
         <p>Begin the registration process by entering your e-mail address below.</p>
 
@@ -13,15 +13,19 @@
             <label for="exampleInputEmail1">Email Address</label>
             <input type="email" class="form-control" id="exampleInputEmail1" value.bind="emailAddress">
         </div>
-        <button type="submit" class="btn btn-primary" click.delegate="findClicked()">Submit</button>
+
+        <p class="text-right">
+            <a href="/">Cancel</a>&nbsp;
+            <button type="submit" class="btn btn-primary" click.delegate="findClicked()">Submit</button>
+        </p>
     </form>
 
     <form if.bind="showLoginForm" submit.delegate="verifyCodeClicked()">
-        <h2>Welcome Back!</h2>
+        <h1>Welcome Back!</h1>
 
         <p>
-            It looks like you are already in our database. We just sent you an e-mail message
-            that contains a code you need to enter below to confirm your identity. It may take a
+            It looks like you are already in our database. In order to verify your identity, we just sent you an e-mail message
+            to the address below. Please enter the verification code found in that message below. It may take a
             few minutes before you receive the message.
         </p>
         <div class="form-group">
@@ -30,17 +34,19 @@
         </div>
         <div class="form-group">
             <label for="validationCode">Verification Code</label>
-            <input type="text" class="form-control" id="validationCode" placeholder="Enter the verification code here" value.bind="token">
+            <input type="text" class="form-control" id="validationCode" placeholder="Enter the verification code here" autocomplete="off" value.bind="token">
         </div>
 
-        <a href="#" click.delegate="cancelClicked()">Cancel</a>
-        <button type="submit" class="btn btn-primary" click.delegate="verifyCodeClicked()">Submit</button>
+        <p class="text-right">
+            <a href="#" click.delegate="cancelClicked()">Cancel</a>&nbsp;
+            <button type="submit" class="btn btn-primary" click.delegate="verifyCodeClicked()" disabled.bind="inProgress">Submit</button>
+        </p>
     </form>
 
     <form if.bind="showFirstTimeForm">
-        <h2>Welcome</h2>
+        <h1>We Need Some Info</h1>
         <p>
-            It looks like you aren't in our database yet. Please enter your contact information
+            It looks like you aren't in our database yet. Please enter <b>your</b> contact information
             below to continue the registration process.
         </p>
 

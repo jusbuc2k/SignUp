@@ -6,7 +6,7 @@
                 <label class="control-label" for="firstName">
                     ${data.child ? "Child's" : "Adult's"} First Name
                 </label>
-                <input type="email" class="form-control" id="firstName" value.bind="data.firstName & validate">
+                <input type="text" class="form-control" id="firstName" value.bind="data.firstName & validate">
                 <span class="help-block" repeat.for="errorInfo of firstNameErrors">
                     ${errorInfo.error.message}
                 </span>
@@ -15,7 +15,7 @@
                 <label class="control-label" for="lastName">
                     ${data.child ? "Child's" : "Adult's"} Last Name
                 </label>
-                <input type="email" class="form-control" id="lastName" value.bind="data.lastName & validate">
+                <input type="text" class="form-control" id="lastName" value.bind="data.lastName & validate">
                 <span class="help-block" repeat.for="errorInfo of lastNameErrors">
                     ${errorInfo.error.message}
                 </span>
@@ -87,7 +87,7 @@
                 </span>
             </div>
             <div class="form-group" validation-errors.bind="birthDateErrors" class.bind="birthDateErrors.length ? 'has-error' : ''">
-                <label class="control-label" for="birthDate">Birth Date</label>
+                <label class="control-label" for="birthDate">Birth Date (M/D/YYYY)</label>
                 <input type="text" class="form-control" id="birthDate" value.bind="data.birthDate & validate">
                 <span class="help-block" repeat.for="errorInfo of birthDateErrors">
                     ${errorInfo.error.message}
@@ -103,18 +103,24 @@
                 </span>
             </div>
             <div class="form-group" validation-errors.bind="medicalNotesErrors" class.bind="medicalNotesErrors.length ? 'has-error' : ''">
-                <label class="control-label" for="medicalNotes">Medical Notes</label>
-                <textarea class="form-control" id="medicalNotes" value.bind="data.medicalNotes & validate"></textarea>
+                <label class="control-label" for="medicalNotes">Medical Notes &amp; Special Instructions</label>
+                <textarea class="form-control" id="medicalNotes" value.bind="data.medicalNotes & validate" rows="4"></textarea>
                 <span class="help-block" repeat.for="errorInfo of medicalNotesErrors">
                     ${errorInfo.error.message}
                 </span>
             </div>
         </div>
 
-        <p class="text-right">
-            <a href="#" click.delegate="cancelClicked()">Cancel</a>&nbsp;
-            <button class="btn btn-primary" click.delegate="saveClicked()">Save</button>
-        </p>
+        <div class="row">
+            <div class="col-xs-4">
+                <button class="btn btn-danger btn-sm" if.bind="canDelete" click.delegate="deleteClicked()">Delete Person</button>
+            </div>
+            <div class="col-xs-8 text-right">
+                <a href="#" click.delegate="cancelClicked()">Cancel</a>&nbsp;
+                <button class="btn btn-primary" click.delegate="saveClicked()">Save</button>
+            </div>
+        </div>
+
     </form>
     
 </template>

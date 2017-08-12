@@ -2,7 +2,7 @@
 import { autoinject } from 'aurelia-framework';
 import { Person } from "./Person";
 import { ValidationControllerFactory, ValidationController } from "aurelia-validation";
-import { EventAggregator } from "aurelia-event-aggregator";
+import { EventAggregator, Subscription } from "aurelia-event-aggregator";
 import { Router } from "aurelia-router";
 import { DataStore } from "../../DataStore";
 import { EventModel } from "../home/event";
@@ -18,10 +18,9 @@ export class FamilyModel {
 
         this.validation = validationControllerFactory.createForCurrentScope();
 
-        eventAggregator.subscribe("Person_Updated", (data) => {
+        this.subscriptions.push(eventAggregator.subscribe("Person_Updated", (data) => {
             if (this.people.indexOf(data) < 0) {
                 this.people.push(data);
-                //this.eventModel.house.people.push(data);
             }            
 
             if (data.isPrimaryContact) {
@@ -33,14 +32,23 @@ export class FamilyModel {
             }
 
             this.selectedPerson = null;
-        });
+        }));
 
-        eventAggregator.subscribe("Person_Cancel", (data) => {
+        this.subscriptions.push(eventAggregator.subscribe("Person_Cancel", (data) => {
             this.selectedPerson = null;
-        });
+        }));
+
+        this.subscriptions.push(eventAggregator.subscribe("Person_Deleted", (data) => {
+            let idx = this.people.indexOf(data);
+            if (idx >= 0) {
+                this.people.splice(idx, 1);
+            }
+            this.selectedPerson = null;
+        }));
     }
 
     protected validation: ValidationController;
+    protected subscriptions: Subscription[] = [];
 
     people: Person[] = [];
     selectedPerson: Person = null;
@@ -64,11 +72,18 @@ export class FamilyModel {
         }
     }
 
-    async activate(params) {
+    activate(params) {
         if (this.eventModel.house) {
             this.people = this.eventModel.house.people;
         } else {
-            this.router.navigateToRoute("start");
+            this.router.navigate(`#/event/${this.eventModel.event.eventID}`);
+        }
+    }
+
+    deactivate() {
+        let sub;
+        while (sub = this.subscriptions.pop()) {
+            sub.dispose();
         }
     }
 

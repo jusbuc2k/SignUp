@@ -1,5 +1,4 @@
 <template>
-    <require from="../navmenu/navmenu.html"></require>
     <require from="./app.css"></require>
 
     <nav class="navbar navbar-default navbar-inverse">
@@ -8,19 +7,15 @@
                 <a class="navbar-brand" href="#">
                     ${siteName}
                 </a>
-            </div>
-        </div>
+
+                <span if.bind="router.isNavigating" class="spinner">
+                    <img src="../../../../wwwroot/ajax-loader.gif" />
+                </span>
+            </div>            
+        </div>        
     </nav>
 
-    <div class="container-fluid">
+    <div class="container">
         <router-view></router-view>
-        <!--<div class="row">
-            <div class="col-sm-3">
-                <navmenu router.bind="router"></navmenu>
-            </div>
-            <div class="col-sm-9 body-content">
-                <router-view></router-view>
-            </div>
-        </div>-->
     </div>
 </template>

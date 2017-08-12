@@ -11,7 +11,7 @@ namespace Registration.Models
 
         public string HouseholdID { get; set; }
 
-        public bool IsNew { get; set; }
+        public string HouseholdName { get; set; }
 
         public Guid EventID { get; set; }
 

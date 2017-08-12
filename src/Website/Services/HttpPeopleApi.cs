@@ -16,6 +16,25 @@ namespace Registration.Services
         public string Password { get; set; }
     }
 
+    public static class PcoEndPointNames
+    {
+        public static readonly string People = "people";
+        public static readonly string Households = "households";
+        public static readonly string Emails = "emails";
+        public static readonly string PhoneNumbers = "phone_numbers";
+        public static readonly string Addresses = "addresses";
+    }
+
+    public static class PcoTypeNames
+    {
+        public static readonly string Person = "Person";
+        public static readonly string Household = "Household";
+        public static readonly string EmailAddress = "Email";
+        public static readonly string Phone = "PhoneNumber";
+        public static readonly string Address = "Address";
+        public static readonly string HouseholdMembership = "HouseholdMembership";
+    }
+
     public class HttpPeopleApi : IPeopleApi
     {
         public HttpPeopleApi(IOptions<HttpPeopleApiOptions> options)
@@ -55,7 +74,7 @@ namespace Registration.Services
             }
             else
             {
-                url = string.Concat(this.Url, path);
+                url = string.Concat(this.Url, "/", path);
             }
                         
             var result = await this.Http.GetAsync(url);
@@ -91,7 +110,7 @@ namespace Registration.Services
             return response;
         }
 
-        protected async Task<PcoDataRecord<T>> PostAsync<T>(string path, PcoSingleResponse<T> data)
+        protected async Task<PcoSingleResponse<T>> PostAsync<T>(string path, PcoSingleResponse<T> data)
         {
             this.EnsureClient();
             string url;
@@ -116,7 +135,7 @@ namespace Registration.Services
 
             var content = await result.Content.ReadAsStringAsync();
 
-            return Newtonsoft.Json.JsonConvert.DeserializeObject<PcoDataRecord<T>>(content);
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<PcoSingleResponse<T>>(content);
         }
 
         protected async Task PatchAsync<T>(string path, T data)
@@ -169,12 +188,12 @@ namespace Registration.Services
         {
             emailAddress = System.Net.WebUtility.UrlEncode(emailAddress);
 
-            var results = await this.GetListAsync<PcoEmailAddress>($"emails?where[address]={emailAddress}");
+            var results = await this.GetListAsync<PcoEmailAddress>($"{PcoEndPointNames.Emails}?where[address]={emailAddress}");
             var firstMatch = results.Data.FirstOrDefault();
 
             if (firstMatch != null)
             {
-                var person = await this.GetRecordAsync<PcoPeoplePerson>($"emails/{firstMatch.ID}/person");
+                var person = await this.GetRecordAsync<PcoPeoplePerson>($"{PcoEndPointNames.Emails}/{firstMatch.ID}/person");
 
                 return person.Data;
             }
@@ -187,7 +206,7 @@ namespace Registration.Services
         public Task<PcoListResponse<PcoPeopleHousehold>> FindHouseholds(string personID)
         {
             personID = System.Net.WebUtility.UrlEncode(personID);
-            return this.GetListAsync<PcoPeopleHousehold>($"people/{personID}/households");
+            return this.GetListAsync<PcoPeopleHousehold>($"{PcoEndPointNames.People}/{personID}/{PcoEndPointNames.Households}");
         }
 
         public Task<PcoSingleResponse<PcoPeopleHousehold>> GetHousehold(string id, bool includePeople = false)
@@ -196,7 +215,7 @@ namespace Registration.Services
 
             var query = new StringBuilder();
 
-            query.Append($"households/{id}");
+            query.Append($"{PcoEndPointNames.Households}/{id}");
 
             if (includePeople)
             {
@@ -209,113 +228,110 @@ namespace Registration.Services
         public Task<PcoListResponse<PcoEmailAddress>> GetEmailsForPerson(string personID)
         {
             personID = System.Net.WebUtility.UrlEncode(personID);
-            return this.GetListAsync<PcoEmailAddress>($"people/{personID}/emails");
+            return this.GetListAsync<PcoEmailAddress>($"{PcoEndPointNames.People}/{personID}/{PcoEndPointNames.Emails}");
         }
 
         public Task<PcoListResponse<PcoPhoneNumber>> GetPhonesForPerson(string personID)
         {
             personID = System.Net.WebUtility.UrlEncode(personID);
-            return this.GetListAsync<PcoPhoneNumber>($"people/{personID}/phone_numbers");
+            return this.GetListAsync<PcoPhoneNumber>($"{PcoEndPointNames.People}/{personID}/{PcoEndPointNames.PhoneNumbers}");
         }
 
         public Task<PcoListResponse<PcoStreetAddress>> GetAddressesForPerson(string personID)
         {
             personID = System.Net.WebUtility.UrlEncode(personID);
-            return this.GetListAsync<PcoStreetAddress>($"people/{personID}/addresses");
+            return this.GetListAsync<PcoStreetAddress>($"{PcoEndPointNames.People}/{personID}/{PcoEndPointNames.Addresses}");
         }
 
-        public async Task<bool> AddOrUpdateEmail(string personID, string emailAddress)
+        public async Task<PcoDataRecord<PcoEmailAddress>> AddOrUpdateEmail(string personID, PcoDataRecord<PcoEmailAddress> emailAddress)
         {
-            var emailRecord = await this.GetEmailAddress(emailAddress);
-
             personID = System.Net.WebUtility.UrlEncode(personID);
 
-            if (emailRecord == null)
+            if (string.IsNullOrEmpty(emailAddress.ID))
             {
-                emailRecord = await this.PostAsync<PcoEmailAddress>($"people/{personID}/emails", new PcoSingleResponse<PcoEmailAddress>()
+                var emailAddressResponse = await this.PostAsync<PcoEmailAddress>($"{PcoEndPointNames.People}/{personID}/{PcoEndPointNames.Emails}", new PcoSingleResponse<PcoEmailAddress>()
                 {
-                    Data = new PcoDataRecord<PcoEmailAddress>()
-                    {
-                        Attributes = new PcoEmailAddress()
-                        {
-                            Address = emailAddress,
-                            Location = "Home",
-                            Primary = true
-                        },
-                        Type = "Email"
-                    }
+                    Data = emailAddress
                 });
+
+                return emailAddressResponse.Data;
             }
             else
             {
-                emailRecord.Attributes.Address = emailAddress;
-
-                await this.PatchAsync($"people/{personID}/emails/{emailRecord.ID}", new PcoSingleResponse<PcoEmailAddress>()
+                await this.PatchAsync($"people/{personID}/emails/{System.Net.WebUtility.UrlEncode(emailAddress.ID)}", new PcoSingleResponse<PcoEmailAddress>()
                 {
-                    Data = emailRecord
+                    Data = emailAddress
                 });
+
+                return emailAddress;
             }
-
-
-            return true;
         }
 
-        public async Task<bool> AddOrUpdatePhone(string personID, string phoneNumber)
+        public async Task<PcoDataRecord<PcoPhoneNumber>> AddOrUpdatePhone(string personID, PcoDataRecord<PcoPhoneNumber> phoneNumber)
         {
-            var phoneRecord = await this.GetPhoneNumber(phoneNumber);
+            //var phoneRecord = await this.GetPhoneNumber(phoneNumber);
 
             personID = System.Net.WebUtility.UrlEncode(personID);
 
-            if (phoneRecord == null)
+            if (string.IsNullOrEmpty(phoneNumber.ID))
             {
-                phoneRecord = await this.PostAsync<PcoPhoneNumber>($"people/{personID}/phone_numbers", new PcoSingleResponse<PcoPhoneNumber>()
+                var newPhoneNumber = await this.PostAsync<PcoPhoneNumber>($"people/{personID}/phone_numbers", new PcoSingleResponse<PcoPhoneNumber>()
                 {
-                    Data = new PcoDataRecord<PcoPhoneNumber>()
-                    {
-                        Attributes = new PcoPhoneNumber()
-                        {
-                            Number = phoneNumber,
-                            Location = "Home",
-                            Primary = true
-                        },
-                        Type = "Email"
-                    }
+                    Data = phoneNumber
                 });
+
+                return newPhoneNumber.Data;
             }
             else
             {
-                phoneRecord.Attributes.Number = phoneNumber;
-
-                await this.PatchAsync($"people/{personID}/phone_numbers/{phoneRecord.ID}", new PcoSingleResponse<PcoPhoneNumber>()
+                await this.PatchAsync($"people/{personID}/phone_numbers/{System.Net.WebUtility.UrlEncode(phoneNumber.ID)}", new PcoSingleResponse<PcoPhoneNumber>()
                 {
-                    Data = phoneRecord
+                    Data = phoneNumber
                 });
-            }
 
-            return true;
+                return phoneNumber;
+            }
         }
 
-        public async Task<string> CreatePerson(PcoPeoplePerson person, string emailAddress, string phoneNumber)
+        public async Task<PcoDataRecord<PcoStreetAddress>> AddOrUpdateAddress(string personID, PcoDataRecord<PcoStreetAddress> address)
         {
-            var personRecord = await this.PostAsync<PcoPeoplePerson>("people", new PcoSingleResponse<PcoPeoplePerson>()
+            personID = System.Net.WebUtility.UrlEncode(personID);
+
+            if (string.IsNullOrEmpty(address.ID))
+            {
+                var newAddress = await this.PostAsync<PcoStreetAddress>($"people/{personID}/addresses", new PcoSingleResponse<PcoStreetAddress>()
+                {
+                    Data = address
+                });
+
+                return newAddress.Data;
+            }
+            else
+            {
+                await this.PatchAsync($"people/{personID}/addresses/{System.Net.WebUtility.UrlEncode(address.ID)}", new PcoSingleResponse<PcoStreetAddress>()
+                {
+                    Data = address
+                });
+
+                return address;
+            }
+        }
+
+        public async Task<string> CreatePerson(PcoPeoplePerson person)
+        {
+            var newPerson = await this.PostAsync<PcoPeoplePerson>("people", new PcoSingleResponse<PcoPeoplePerson>()
             {
                 Data = new PcoDataRecord<PcoPeoplePerson>()
                 {
                     Attributes = person,
-                    Type = "Person"
+                    Type = "person"
                 }
             });
 
-            if (!person.Child)
-            {
-                await AddOrUpdateEmail(personRecord.ID, emailAddress);
-                await AddOrUpdatePhone(personRecord.ID, phoneNumber);
-            }            
-
-            return personRecord.ID;
+            return newPerson.Data.ID;
         }
         
-        public async Task<bool> UpdatePerson(string id, PcoPeoplePerson person, string emailAddress, string phoneNumber)
+        public async Task<bool> UpdatePerson(string id, PcoPeoplePerson person)
         {
             id = System.Net.WebUtility.UrlEncode(id);
 
@@ -324,26 +340,21 @@ namespace Registration.Services
                 Data = new PcoDataRecord<PcoPeoplePerson>()
                 {
                     Attributes = person,
-                    Type = "Person",
+                    Type = "person",
                     ID = id
                 }
             });
-
-            if (!person.Child)
-            {
-                await AddOrUpdateEmail(id, emailAddress);
-                await AddOrUpdatePhone(id, phoneNumber);
-            }
 
             return true;
         }
 
         public async Task<string> CreateHousehold(string name, string primaryContactID, IEnumerable<string> memberIDs)
         {
-            var house = await this.PostAsync<PcoPeopleHousehold>($"household", new PcoSingleResponse<PcoPeopleHousehold>()
+            var house = await this.PostAsync<PcoPeopleHousehold>($"{PcoEndPointNames.Households}", new PcoSingleResponse<PcoPeopleHousehold>()
             {
                 Data = new PcoDataRecord<PcoPeopleHousehold>()
                 {
+                    Type = PcoTypeNames.Household,
                     Attributes = new PcoPeopleHousehold()
                     {
                         Name = name,
@@ -353,18 +364,68 @@ namespace Registration.Services
                     {
                         {
                             "people",
-                            new PcoPeopleRelationship(memberIDs.Select(peep => new PcoPeopleRelationshipData() { Type = "person", ID = peep }))
+                            new PcoPeopleRelationship(memberIDs.Select(peep => new PcoPeopleRelationshipData() {
+                                Type = PcoTypeNames.Person,
+                                ID = peep })
+                            )
+                        },
+                        {
+                            "primary_contact",
+                            new PcoPeopleRelationship(new PcoPeopleRelationshipData()
+                            {
+                                ID  = primaryContactID,
+                                Type = PcoTypeNames.Person
+                            })
                         }
                     }
                 }
             });
 
-            return house.ID;
+            return house.Data.ID;
         }
 
-        public Task AddToHousehold(string householdID, string personID)
+        public async Task UpdateHousehold(string id, string name, string primaryContactID)
         {
-            throw new NotImplementedException();
+            id = System.Net.WebUtility.UrlEncode(id);
+
+            await this.PatchAsync<PcoSingleResponse<PcoPeopleHousehold>>($"{PcoEndPointNames.Households}/{id}", new PcoSingleResponse<PcoPeopleHousehold>()
+            {
+                Data = new PcoDataRecord<PcoPeopleHousehold>()
+                {
+                    ID = id,
+                    Type = PcoTypeNames.Household,
+                    Attributes = new PcoPeopleHousehold()
+                    {
+                        Name = name,
+                        PrimaryContactID = primaryContactID
+                    }
+                }
+            });
+        }
+
+        public async Task AddToHousehold(string householdID, string personID)
+        {
+            householdID = System.Net.WebUtility.UrlEncode(householdID);
+
+            await this.PostAsync<dynamic>($"households/{householdID}/household_memberships", new PcoSingleResponse<dynamic>()
+            {
+                Data = new PcoDataRecord<dynamic>
+                {
+                    Type = PcoTypeNames.HouseholdMembership,
+                    Attributes = new { Pending = false },
+                    Relationships = new Dictionary<string, PcoPeopleRelationship>()
+                    {
+                        {
+                            "person",
+                            new PcoPeopleRelationship(new PcoPeopleRelationshipData()
+                            {
+                                ID = personID,
+                                Type = PcoTypeNames.Person
+                            })
+                        }
+                    }
+                }               
+            });
         }
 
 

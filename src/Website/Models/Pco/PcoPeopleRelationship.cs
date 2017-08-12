@@ -16,12 +16,12 @@ namespace Registration.Models.Pco
 
         public PcoPeopleRelationship(IEnumerable<PcoPeopleRelationshipData> data)
         {
-            this.Data = new JArray(data);
+            this.Data = JArray.FromObject(data);
         }
 
         public PcoPeopleRelationship(PcoPeopleRelationshipData data)
         {
-            this.Data = new JObject(data);
+            this.Data = JObject.FromObject(data);
         }
 
         public IDictionary<string, string> Links { get; set; }

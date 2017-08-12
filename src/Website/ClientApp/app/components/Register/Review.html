@@ -1,7 +1,10 @@
 ﻿<template>
-    <h2>
+
+    <require from="../../ValueConverters"></require>
+
+    <h1>
         Review &amp; Confirm Registration
-    </h2>
+    </h1>
 
     <p>
         Ensure each family member you wish to register is checked below. If a check box is
@@ -18,10 +21,10 @@
         <li repeat.for="person of people" class="list-group-item">
             <div class="row">
                 <div class="col-xs-1 enroll-check">
-                    <i class="fa fa-ban" if.bind="!person.eligable"></i>
+                    <!--<i class="fa fa-user-o" if.bind="!person.eligable"></i>-->
                     <input type="checkbox" checked.bind="person.selected" if.bind="person.eligable" />
                 </div>
-                <div class="col-xs-7">
+                <div class="col-xs-11">
                     <div>
                         <i class="fa ${person.child ? 'fa-child':'fa-user'}"></i>
                         ${person.displayName}
@@ -29,24 +32,24 @@
                     <div>
                         <small>${person.child ? 'Child' : 'Adult'}</small> 
                         <small if.bind="person.child">|&nbsp;Age: ${person.age}</small>
-                        <small if.bind="person.child">|&nbsp;Grade: ${person.grade}</small> 
+                        <small if.bind="person.child">|&nbsp;Grade: ${person.grade | gradeDisplay}</small> 
                         <small if.bind="person.fee">|&nbsp;Group: ${person.fee.group}</small> 
                     </div>                    
                 </div>
-                <div class="col-xs-4">
+                <!--<div class="col-xs-4">
                     <span if.bind="person.fee">Fee: $${person.fee.cost}</span>
-                </div>
+                </div>-->
             </div>           
         </li>
     </ul>
 
-    <p class="text-right">
+    <!--<p class="text-right">
         Total Registration Fees*: $${totalCost}
-    </p>
+    </p>-->
 
     <p class="text-right">
         <a href="#" click.delegate="backClicked()">Go Back</a>&nbsp;
-        <button class="btn btn-success" click.delegate="submitClicked()">Complete Registration</button>
+        <button class="btn btn-success" click.delegate="submitClicked()" disabled.bind="inProgress">Submit Registration</button>
     </p>
 
     <p>${eventFeesNotice}</p>

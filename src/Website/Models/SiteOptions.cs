@@ -8,5 +8,7 @@ namespace Registration.Models
     public class SiteOptions
     {
         public string Name { get; set; }
+
+        public string NotifyEmail { get; set; }
     }
 }
