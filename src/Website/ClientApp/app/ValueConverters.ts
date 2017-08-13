@@ -13,7 +13,7 @@
                 case 4: return "4th";
                 case 5: return "5th";
                 case 6: return "6th";
-                default: return "Other";
+                default: return "None";
             }
         }
     }

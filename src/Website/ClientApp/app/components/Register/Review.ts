@@ -56,7 +56,7 @@ export class FamilyModel {
                 f.child === p.child
                 && (f.gender === p.gender || f.gender === "*")
                 && f.maxAge >= p.age
-                && f.maxGrade >= parseInt(p.grade, 10));
+                && (p.grade == null || p.grade == "" || f.maxGrade >= parseInt(p.grade, 10)))
 
             return Object.assign(new Person(), {
                 eligable: fee != null,

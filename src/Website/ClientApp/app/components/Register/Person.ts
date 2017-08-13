@@ -45,12 +45,13 @@ export class PersonModel {
     }
 
     genderOptions = [
+        { value: "", text: "[Select a Gender]"},
         { value: "F", text: "Female" },
         { value: "M", text: "Male" }
     ];
 
     gradeOptions = [
-        { value: "", text: "[None]" },
+        { value: "", text: "None" },
         { value: -1, text: "Pre-K" },
         { value: 0, text: "Kindergarten" },
         { value: 1, text: "1st" },
@@ -148,7 +149,7 @@ ValidationRules
 
     .ensure('phoneNumber').required().when(x => !x.child).maxLength(13).minLength(10)
 
-    .ensure('grade').required().when(x => x.child)
+    //.ensure('grade').required().when(x => x.child)
     .ensure('gender').required().when(x => x.child)
     .ensure('birthDate').required().when(x => x.child).satisfiesRule("date")
 
