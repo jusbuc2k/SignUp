@@ -46,10 +46,15 @@
     <form if.bind="showFirstTimeForm">
         <h1>We Need Some Info</h1>
         <p>
-            It looks like you aren't in our database yet. Please enter <b>your</b> contact information
+            It looks like you aren't in our database yet. Please enter your contact information
             below to continue the registration process.
         </p>
-
+        
+        <div class="alert alert-info" role="alert">
+            Please only enter <i>your</i> name &amp; contact information below. You will have the opportunity
+            to add additional adults to your household in the next step.
+        </div>
+       
         <compose view-model="./Person" model.bind="newPerson"></compose>
     </form>    
 
