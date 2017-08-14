@@ -1,13 +1,12 @@
 import { HttpClient, json } from 'aurelia-fetch-client';
 import { autoinject, PLATFORM } from 'aurelia-framework';
 import { Router, RouterConfiguration } from "aurelia-router";
-import { DataStore, IHousehold } from "../../DataStore";
+import { IHousehold } from "../../DataStore";
 
 @autoinject()
 export class EventModel {
     public constructor(
-        protected http: HttpClient,
-        public dataStore: DataStore
+        protected http: HttpClient
     ){
         
     }

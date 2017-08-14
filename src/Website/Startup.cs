@@ -40,10 +40,10 @@ namespace WebApplicationBasic
             services.Configure<Registration.Models.SiteOptions>(this.Configuration.GetSection("SiteOptions"));
             services.Configure<Registration.Services.HttpPeopleApiOptions>(this.Configuration.GetSection("PcoApi"));
             services.Configure<Registration.Services.SendGridOptions>(this.Configuration.GetSection("SendGrid"));
-            services.Configure<Registration.Services.DbAccessOptions>(this.Configuration.GetSection("EventDatabase"));
+            services.Configure<Registration.Services.SqlDbAccessOptions>(this.Configuration.GetSection("EventDatabase"));
 
             services.AddScoped<IPeopleApi, Registration.Services.HttpPeopleApi>();
-            services.AddScoped<IDataAccess, DbAccess>();
+            services.AddScoped<IDataAccess, SqlDataAccess>();
             services.AddSingleton<IMessageService, SendGridMessageService>();
 
             // Add framework services.

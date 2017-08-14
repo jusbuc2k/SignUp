@@ -31,7 +31,5 @@ namespace Registration.Models.Pco
 
         [JsonProperty("medical_notes")]
         public string MedicalNotes { get; set; }
-
-
     }
 }

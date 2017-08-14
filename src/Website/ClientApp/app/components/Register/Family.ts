@@ -4,7 +4,6 @@ import { Person } from "./Person";
 import { ValidationControllerFactory, ValidationController } from "aurelia-validation";
 import { EventAggregator, Subscription } from "aurelia-event-aggregator";
 import { Router } from "aurelia-router";
-import { DataStore } from "../../DataStore";
 import { EventModel } from "../home/event";
 
 @autoinject()
@@ -131,7 +130,4 @@ export class FamilyModel {
         this.router.navigateToRoute("review");
     }
 
-    async findClicked() {
-        
-    }
 }

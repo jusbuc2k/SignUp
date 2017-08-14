@@ -4,7 +4,6 @@ import { Person } from "./Person";
 import { ValidationControllerFactory, ValidationController } from "aurelia-validation";
 import { EventAggregator } from "aurelia-event-aggregator";
 import { Router } from "aurelia-router";
-import { DataStore } from "../../DataStore";
 import { EventModel } from "../home/event";
 
 interface IFeeSchedule {
@@ -14,6 +13,9 @@ interface IFeeSchedule {
     cost: number;
     group: string
 }
+
+const SaveErrorMessage = "Sorry, but we could not save your registration at this time. Please try again later or contact support.";
+const AtLeastOnePersonSelectedErrorMessage = "At least one person must be selected to register.";
 
 @autoinject()
 export class FamilyModel {
@@ -26,12 +28,11 @@ export class FamilyModel {
         this.validation = validationControllerFactory.createForCurrentScope();
     }
 
-    protected validation: ValidationController;
-
+    validation: ValidationController;
     people: Person[] = [];
-
     errors: string[] = [];
     inProgress: boolean = false;
+    eventFeesNotice: string;
 
     get totalCost(): number {
         return this.people.reduce((sum, cur) => {
@@ -43,14 +44,15 @@ export class FamilyModel {
         }, 0);
     }
 
-    eventFeesNotice: string;
-
     activate(params) {
         if (!this.eventModel.house) {
             this.router.navigate(`#/event/${this.eventModel.event.eventID}`);
             return;
         }
 
+        // Load household people and all applicable fees / group assignments
+        //TODO: this is a mess right now, need to re-think these rules. There's no way
+        // to set a minimum age/grade and set a cutoff date for the age (e.g. age 3 by Aug 1)
         this.people = this.eventModel.house.people.map(p => {
             let fee = this.eventModel.event.fees.find(f =>
                 f.child === p.child
@@ -67,7 +69,7 @@ export class FamilyModel {
         });
     }
 
-    async backClicked() {
+    backClicked() {
         this.router.navigateToRoute("family");
     }
 
@@ -79,13 +81,15 @@ export class FamilyModel {
         this.errors.splice(0, this.errors.length);
 
         if (this.people.every(x => !x["selected"])) {
-            this.errors.push("At least one person must be selected to register.");
+            this.errors.push(AtLeastOnePersonSelectedErrorMessage);
             return;
         }
 
         this.inProgress = true;
 
         try {
+            // save the registration, family info, etc.
+
             let result = await this.http.fetch("/api/CompleteRegistration", {
                 credentials: 'same-origin',
                 method: "post",
@@ -99,13 +103,13 @@ export class FamilyModel {
                 this.eventModel.house = null;
                 this.router.navigateToRoute("confirm");
             } else {
-                this.errors.push("Sorry, but we could not save your registration at this time. Please try again later or contact support.");
+                this.errors.push(SaveErrorMessage);
             }
 
             this.inProgress = false;
         } catch (e) {
             this.inProgress = false;
-            this.errors.push("Sorry, but we could not save your registration at this time. Please try again later or contact support.");
+            this.errors.push(SaveErrorMessage);
         }
     }
 }

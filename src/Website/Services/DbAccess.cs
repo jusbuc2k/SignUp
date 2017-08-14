@@ -9,18 +9,17 @@ using Registration.Models;
 
 namespace Registration.Services
 {
-
-    public class DbAccessOptions
+    public class SqlDbAccessOptions
     {
         public string ConnectionString { get; set; }
     }
 
-    public class DbAccess : IDataAccess, IDisposable
+    public class SqlDataAccess : IDataAccess, IDisposable
     {
-        private DbAccessOptions _options;
+        private SqlDbAccessOptions _options;
         private System.Data.Common.DbConnection _connection;
 
-        public DbAccess(IOptions<DbAccessOptions> options)
+        public SqlDataAccess(IOptions<SqlDbAccessOptions> options)
         {
             _options = options.Value;
         }
@@ -42,11 +41,16 @@ namespace Registration.Services
 
         public async Task<LoginToken> CreateLoginToken(string emailAddress, string personID)
         {
+            //TODO: The generation of the token doensn't seem like 
+            // it should be at this layer. Maybe it should be passed in?
             var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
+
+            // Change the buffer length to change the number of digits in the token
             var buffer = new byte[6];
 
             rng.GetBytes(buffer);
             
+            // Get a 6 digit string using characters between 48 and 58 (digits 0-9)
             var code = new string(buffer.Select(b => (char)((int)Math.Floor((b / 255D) * 10D) + 48)).ToArray());
 
             var tokenRecord = new LoginToken()
@@ -72,50 +76,56 @@ namespace Registration.Services
         public async Task<VerifyLoginTokenResult> VerifyLoginToken(Guid tokenID, string token)
         {
             var connection = await this.EnsureConnection();
-
-            var matches = await this._connection.QueryAsync<LoginToken>(@"
-                SELECT * FROM dbo.LoginToken WHERE TokenID = @TokenID AND Token = @Token;
-            ", new
+            var result = new VerifyLoginTokenResult()
             {
-                TokenID = tokenID,
-                Token = token
-            });
+                Success = false
+            };
 
-            if (matches.Any(x => x.ExpiresDateTime > DateTimeOffset.Now && x.BadAttemptCount < 4))
+            using (var transaction = connection.BeginTransaction())
             {
-                var match = matches.First();
+                // Fetch a matching login token by ID
+                var matches = await this._connection.QueryAsync<LoginToken>(@"
+                    SELECT * FROM dbo.LoginToken WHERE TokenID = @TokenID AND Token = @Token;
+                    ", new {
+                        TokenID = tokenID,
+                        Token = token
+                    }, transaction: transaction);
 
-                await connection.ExecuteAsync(@"
-                    DELETE FROM dbo.LoginToken WHERE TokenID = @TokenID;
-                ", new
+                // If there is a match, and it hasn't been attempted 3 times
+                if (matches.Any(x => x.ExpiresDateTime > DateTimeOffset.Now && x.BadAttemptCount < 3))
                 {
-                    tokenID
-                });
+                    var match = matches.First();
 
-                return new VerifyLoginTokenResult()
-                {
-                    Success = true,
-                    BadAttemptCount = 0,
-                    EmailAddress = match.EmailAddress,
-                    ExpiresDateTime = match.ExpiresDateTime,
-                    PersonID = match.PersonID,
-                    Token = match.Token,
-                    TokenID = match.TokenID
-                };
-            }
-            else
-            {
-                await connection.ExecuteAsync(@"
-                    UPDATE dbo.LoginToken SET BadAttemptCount = BadAttemptCount + 1 WHERE TokenID = @TokenID;
-                ", new
-                {
-                    tokenID
-                });
+                    // Delete the token so it can't be used again
+                    await connection.ExecuteAsync(@"
+                            DELETE FROM dbo.LoginToken WHERE TokenID = @TokenID;
+                        ", new {
+                                tokenID
+                            }, transaction: transaction);
 
-                return new VerifyLoginTokenResult()
+                    result.Success = true;
+                    result.BadAttemptCount = 0;
+                    result.EmailAddress = match.EmailAddress;
+                    result.ExpiresDateTime = match.ExpiresDateTime;
+                    result.PersonID = match.PersonID;
+                    result.Token = match.Token;
+                    result.TokenID = match.TokenID;
+                }
+                else
                 {
-                    Success = false
-                };
+                    // Increment the bad attempt counter
+                    await connection.ExecuteAsync(@"
+                            UPDATE dbo.LoginToken SET BadAttemptCount = BadAttemptCount + 1 WHERE TokenID = @TokenID;
+                        ", new {
+                            tokenID
+                        }, transaction: transaction);
+
+                    result.Success = false;
+                }
+
+                transaction.Commit();
+
+                return result;
             }
         }
 
@@ -178,7 +188,6 @@ namespace Registration.Services
                 PersonID = personID
             });
         }
-
 
         public void Dispose()
         {

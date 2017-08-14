@@ -20,6 +20,5 @@ export class StartModel {
         this.name = this.eventModel.event.name;
         this.fees = this.eventModel.event.fees;
     }
-
 }
 

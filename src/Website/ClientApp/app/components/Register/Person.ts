@@ -43,13 +43,14 @@ export class PersonModel {
 
         this.canDelete = (data.personID == null && !data.isPrimaryContact);
     }
-
+    
     genderOptions = [
         { value: "", text: "[Select a Gender]"},
         { value: "F", text: "Female" },
         { value: "M", text: "Male" }
     ];
 
+    //TODO: Load these from PCO or event DB via the API on app launch?
     gradeOptions = [
         { value: "", text: "None" },
         { value: -1, text: "Pre-K" },
@@ -82,6 +83,7 @@ export class PersonModel {
         this.eventAggregator.publish("Person_Cancel", this.orig);
     }
 
+    // Used to auto-fill the city/state when the zip code changes
     async zipChanged() {
         let response = await this.http.fetch(`api/Zip/${this.data.zip}`);
 
@@ -115,7 +117,7 @@ export class Person {
 
     get displayName() {
         if (!this.firstName && !this.lastName) {
-            return "**New Person**";
+            return "New Person*";
         } else {
             return `${this.firstName} ${this.lastName}`;
         }

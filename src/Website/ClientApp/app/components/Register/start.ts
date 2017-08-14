@@ -1,11 +1,9 @@
 ﻿import { HttpClient , json } from 'aurelia-fetch-client';
 import { autoinject } from 'aurelia-framework';
 import { Router } from "aurelia-router";
-import { globalState } from "../../GlobalState";
 import { Person } from "./Person";
 import * as moment from "moment";
 import { EventAggregator, Subscription } from "aurelia-event-aggregator";
-import { DataStore } from "../../DataStore";
 import { EventModel } from "../home/event";
 
 const ErrorSuffix = "Please try again later or contact support for assistance.";
@@ -37,7 +35,7 @@ export class StartModel {
     showLoginForm: boolean = false;
     newPerson: Person;
 
-    protected tokenID: string;
+    tokenID: string;
     token: string;
 
     activate(params) {
@@ -53,6 +51,7 @@ export class StartModel {
         }
     }
 
+    // Action taken when searching for a user by e-mail address on the first screen
     async findClicked() {
         if (this.inProgress) {
             return;
@@ -100,6 +99,7 @@ export class StartModel {
         this.showFirstTimeForm = false;
     }
 
+    // Get or create a user's household and load the family screen
     async loadAndStart() {
         let result = await this.http.fetch(`/api/GetOrCreateHouse`, {
             credentials: 'same-origin',
@@ -121,6 +121,7 @@ export class StartModel {
         this.router.navigateToRoute("family");
     }
 
+    // When the suer clicks submit on the code verification screen
     async verifyCodeClicked() {
         if (this.inProgress) {
             return;
@@ -128,7 +129,8 @@ export class StartModel {
 
         this.errorMessage = "";
         this.inProgress = true;
-        
+
+        // Validate the verification code sent via e-mail and sign the user in if it's valid
         let result = await this.http.fetch('/api/VerifyLoginToken', {
             credentials: 'same-origin',
             method: "post",
@@ -138,20 +140,21 @@ export class StartModel {
             })
         });
 
+        this.token = "";       
+
         if (result.ok) {
             let data = await result.json();
 
-            this.token = "";
-
             await this.loadAndStart();
+
             this.inProgress = false;
         } else {
             this.errorMessage = "Sorry, we couldn't verify the code you entered was correct. Please try again or go back and start over.";
-            this.token = "";       
             this.inProgress = false;
         }
     }
 
+    // Setup a new house with the single new person and launch the family screen
     submitNewPersonClicked() {
         this.eventModel.house = {
             people: [
@@ -161,8 +164,4 @@ export class StartModel {
 
         this.router.navigateToRoute("family");
     }
-}
-
-interface ILoginTokenResponse {
-    TokenID: string;
 }

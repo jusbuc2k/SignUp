@@ -21,9 +21,6 @@ export class App {
             },
 
             { route: 'event/:id', name: 'event', moduleId: PLATFORM.moduleName("../home/event"), title: "Event Registration" }
-            //{ route: 'family/:id', name: 'family', moduleId: PLATFORM.moduleName("../Register/Family"), title: "Household" },
-            //{ route: 'review', name: 'review', moduleId: PLATFORM.moduleName("../Register/Review"), title: "Review" }
-
         ]);
 
         this.router = router;
