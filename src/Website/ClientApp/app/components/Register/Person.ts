@@ -52,8 +52,8 @@ export class PersonModel {
 
     //TODO: Load these from PCO or event DB via the API on app launch?
     gradeOptions = [
-        { value: "", text: "None" },
-        { value: -1, text: "Pre-K" },
+        { value: "", text: "None / Not Started" },
+        { value: -1, text: "Pre-K / Pre-School" },
         { value: 0, text: "Kindergarten" },
         { value: 1, text: "1st" },
         { value: 2, text: "2nd" },
@@ -62,6 +62,21 @@ export class PersonModel {
         { value: 5, text: "5th" },
         { value: 6, text: "6th" }
     ];
+
+    get grade(): string {
+        if (typeof this.data.grade === "number") {
+            return this.data.grade.toString()
+        } else {
+            return "";
+        }
+    }
+    set grade(value: string) {
+        if (value) {
+            this.data.grade = parseInt(value, 10);
+        } else {
+            this.data.grade = null;
+        }       
+    }
 
     async saveClicked() {
         let validationResult = await this.validation.validate({ object: this.data });
@@ -104,7 +119,7 @@ export class Person {
     emailAddress: string;
     phoneNumber: string;
 
-    grade: string;
+    grade: number;
     gender: string;
     birthDate: string;
 

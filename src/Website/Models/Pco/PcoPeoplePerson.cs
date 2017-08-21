@@ -27,7 +27,7 @@ namespace Registration.Models.Pco
         public bool Child { get; set; }
 
         [JsonProperty("grade")]
-        public string Grade { get; set; }
+        public int? Grade { get; set; }
 
         [JsonProperty("medical_notes")]
         public string MedicalNotes { get; set; }

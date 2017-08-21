@@ -5,13 +5,58 @@ import { ValidationControllerFactory, ValidationController } from "aurelia-valid
 import { EventAggregator } from "aurelia-event-aggregator";
 import { Router } from "aurelia-router";
 import { EventModel } from "../home/event";
+import * as moment from "moment";
 
-interface IFeeSchedule {
+interface IFeeGroup {
+    order: number;
+    minAge: number;
     maxAge: number;
+    ageUnit: string;
+    ageCutoff: string;
+    minGrade: number;
     maxGrade: number;
+    gender: string;
     child: boolean;
     cost: number;
-    group: string
+    group: string;
+    applyAgeFilter: boolean;
+    applyGradeFilter: boolean;
+}
+
+function getFeeGroup(fees: IFeeGroup[], person: Person) {
+    return fees.find(fee => {
+        if (fee.child !== person.child) {
+            return false;
+        }
+
+        if (fee.gender !== "*" && person.gender !== fee.gender) {
+            return false;
+        }
+
+        // check grade rules
+        if (fee.applyGradeFilter && (fee.minGrade >= -1 || fee.maxGrade >= -1)) {
+            if (person.grade == null) {
+                return false;
+            } else if (person.grade > fee.maxGrade || person.grade < fee.minGrade) {
+                return false;
+            }
+        }
+
+        // check age rules.
+        if (fee.applyAgeFilter && (fee.minAge || fee.maxAge)) {
+            if (person.birthDate == null || person.birthDate === "") {
+                return false;
+            } else {
+                let age = (fee.ageCutoff == null) ? person.age : moment(fee.ageCutoff, "YYYY-MM-DD").diff(moment(person.birthDate, "M/D/YYYY"), "years");
+
+                if (age > fee.maxAge || age < fee.minAge) {
+                    return false;
+                }
+            }
+        }       
+
+        return true;
+    });
 }
 
 const SaveErrorMessage = "Sorry, but we could not save your registration at this time. Please try again later or contact support.";
@@ -50,15 +95,13 @@ export class FamilyModel {
             return;
         }
 
+        let getFeeGroupFn = getFeeGroup.bind(null, this.eventModel.event.fees);
+
         // Load household people and all applicable fees / group assignments
         //TODO: this is a mess right now, need to re-think these rules. There's no way
         // to set a minimum age/grade and set a cutoff date for the age (e.g. age 3 by Aug 1)
         this.people = this.eventModel.house.people.map(p => {
-            let fee = this.eventModel.event.fees.find(f =>
-                f.child === p.child
-                && (f.gender === p.gender || f.gender === "*")
-                && f.maxAge >= p.age
-                && (p.grade == null || p.grade == "" || f.maxGrade >= parseInt(p.grade, 10)))
+            let fee = getFeeGroupFn(p);
 
             return Object.assign(new Person(), {
                 eligable: fee != null,

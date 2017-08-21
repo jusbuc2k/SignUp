@@ -17,6 +17,7 @@ namespace Registration.Services
         public static readonly string PhoneNumbers = "phone_numbers";
         public static readonly string Addresses = "addresses";
         public static readonly string FieldData = "field_data";
+        public static readonly string FieldDefinition = "field_definition";
     }
 
     public static class PcoTypeNames
@@ -295,7 +296,7 @@ namespace Registration.Services
                 Data = new PcoDataRecord<PcoPeoplePerson>()
                 {
                     Attributes = person,
-                    Type = "person"
+                    Type = "person"                    
                 }
             });
 

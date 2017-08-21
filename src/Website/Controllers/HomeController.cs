@@ -381,7 +381,13 @@ namespace WebApplicationBasic.Controllers
             // TODO: There is a scenario where the primary contact is a new person and they were removed
             // and there isn't a new primary contact. Fix that so this never throws an error. 
             var primary = model.People.SingleOrDefault(x => x.IsPrimaryContact);
-            
+            var evt = await _db.GetEvent(model.EventID);
+
+            if (evt == null)
+            {
+                return this.BadRequest("An event must be specified or event not found.");
+            }
+
             if (primary == null)
             {
                 return this.BadRequest("A primary contact must be specified.");
@@ -394,7 +400,7 @@ namespace WebApplicationBasic.Controllers
 
             // We don't let the user set this directly right now, we 
             // just create a household using the name of the primary contact
-            if (string.IsNullOrEmpty(model.HouseholdName))
+            if (string.IsNullOrEmpty(model.HouseholdName) || model.HouseholdName == primary.EmailAddress)
             {
                 model.HouseholdName = $"{primary.LastName} Household";
             }
@@ -485,9 +491,23 @@ namespace WebApplicationBasic.Controllers
                     continue;
                 }
 
+                string groupName = null;
+
                 if (person.Selected)
                 {
                     notifyMessage.AppendLine($" - {person.FirstName} {person.LastName}");
+
+                    var fee = evt.Fees.FindMatchingFee(person);
+
+                    if (fee == null)
+                    {
+                        groupName = fee.Group;
+                        //TODO: Assign PCO group to custom field
+                    }
+                    else
+                    {
+                        groupName = "N/A";
+                    }
                 }
 
                 await _db.CreateEventPerson(new EventPerson()
@@ -511,7 +531,7 @@ namespace WebApplicationBasic.Controllers
                     Gender = person.Gender,
                     //TODO: This is a hack to know which people were selected. Need to refactor the whole Fees/Age Limits thing etc
                     // and add Type field or something to log associated parent contacts or what-not.
-                    Group = person.Selected ? "Selected" : null
+                    Group = groupName
                 });
             }
 

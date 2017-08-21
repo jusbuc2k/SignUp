@@ -30,7 +30,7 @@ namespace Registration.Models
 
         public string PhoneNumberID { get; set; }
 
-        public string Grade { get; set; }
+        public int? Grade { get; set; }
 
         public string MedicalNotes { get; set; }
 

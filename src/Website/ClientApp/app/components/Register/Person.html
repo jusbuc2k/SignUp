@@ -63,7 +63,7 @@
             </div> 
             <div class="form-group" validation-errors.bind="gradeErrors" class.bind="gradeErrors.length ? 'has-error' : ''">
                 <label class="control-label" for="grade">Grade</label>
-                <select type="text" class="form-control" id="grade" value.bind="data.grade & validate">
+                <select type="text" class="form-control" id="grade" value.bind="grade & validate">
                     <option repeat.for="opt of gradeOptions" value.bind="opt.value">${opt.text}</option>
                 </select>
                 <span class="help-block" repeat.for="errorInfo of gradeErrors">

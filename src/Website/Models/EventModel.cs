@@ -28,5 +28,7 @@ namespace Registration.Models
         public IEnumerable<EventFee> Fees { get; set; }
 
         public string SupportInfo { get; set; }
+
+        public string PcoGroupFieldDefinitionName { get; set; }
     }
 }
