@@ -501,12 +501,12 @@ namespace WebApplicationBasic.Controllers
 
                     if (fee == null)
                     {
-                        groupName = fee.Group;
-                        //TODO: Assign PCO group to custom field
+                        groupName = "N/A";
                     }
                     else
                     {
-                        groupName = "N/A";
+                        groupName = fee.Group;
+                        
                     }
                 }
 
