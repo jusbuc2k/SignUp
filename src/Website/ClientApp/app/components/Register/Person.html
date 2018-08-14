@@ -1,10 +1,14 @@
 ﻿<template>
 
+    <p>
+        <button class="btn btn-success" click.delegate="saveClicked()">Save</button>
+        <a href="#" click.delegate="cancelClicked()">Cancel</a>&nbsp;
+    </p>
     <form>
         <div class="row">
             <div class="col-sm-6 form-group" validation-errors.bind="firstNameErrors" class.bind="firstNameErrors.length ? 'has-error' : ''">
                 <label class="control-label" for="firstName">
-                   First Name
+                    First Name
                 </label>
                 <input type="text" class="form-control" id="firstName" value.bind="data.firstName & validate">
                 <span class="help-block" repeat.for="errorInfo of firstNameErrors">
@@ -20,7 +24,7 @@
                     ${errorInfo.error.message}
                 </span>
             </div>
-        </div>       
+        </div>
 
         <div if.bind="!data.child">
             <div class="checkbox">
@@ -60,7 +64,7 @@
                 <span class="help-block" repeat.for="errorInfo of birthDateErrors">
                     ${errorInfo.error.message}
                 </span>
-            </div> 
+            </div>
             <div class="form-group" validation-errors.bind="gradeErrors" class.bind="gradeErrors.length ? 'has-error' : ''">
                 <label class="control-label" for="grade">Grade</label>
                 <select type="text" class="form-control" id="grade" value.bind="grade & validate">
@@ -108,7 +112,7 @@
                 <span class="help-block" repeat.for="errorInfo of stateErrors">
                     ${errorInfo.error.message}
                 </span>
-            </div>            
+            </div>
         </div>
 
         <div class="checkbox" if.bind="addressChanged && data.isPrimaryContact">
@@ -120,8 +124,8 @@
                 <button class="btn btn-danger btn-sm" if.bind="canDelete" click.delegate="deleteClicked()">Delete Person</button>
             </div>
             <div class="col-xs-8 text-right">
+                <button class="btn btn-success" click.delegate="saveClicked()">Save</button>
                 <a href="#" click.delegate="cancelClicked()">Cancel</a>&nbsp;
-                <button class="btn btn-primary" click.delegate="saveClicked()">Save</button>
             </div>
         </div>
 
