@@ -18,6 +18,12 @@ export class PersonModel {
         this.validation.validateTrigger = validateTrigger.change;
         this.eventAggregator = eventAggregator;
         this.http = http;
+
+        // click the save button when changing peeps
+        this.eventAggregator.subscribe("Person_SelectionChanging", async (next) => {
+            await this.saveClicked();
+            next();
+        });
     }
 
     determineActivationStrategy() {
@@ -52,6 +58,7 @@ export class PersonModel {
 
     //TODO: Load these from PCO or event DB via the API on app launch?
     gradeOptions = [
+        { value: -2, text: "[Select a Grade]"},
         { value: "", text: "None / Not Started" },
         { value: -1, text: "Pre-K / Pre-School" },
         { value: 0, text: "Kindergarten" },
@@ -79,7 +86,13 @@ export class PersonModel {
     }
 
     async saveClicked() {
-        let validationResult = await this.validation.validate({ object: this.data });
+        let validationResult = await this.validation.validate({ object: this });
+
+        if (!validationResult.valid) {
+            return;
+        }
+
+        validationResult = await this.validation.validate({ object: this.data });
 
         if (!validationResult.valid) {
             return;
@@ -148,6 +161,10 @@ export class Person {
 
 }
 
+ValidationRules.ensure<PersonModel, string>("grade")
+    .satisfies((value) => value === "" || value >= -1).when(x => x.data.child)
+    .on(PersonModel);
+
 ValidationRules.customRule(
     'date',
     (value, obj) => value === null || value === undefined || value == "" || (/\d{1,2}\/\d{1,2}\/\d{4}/i.test(value) && moment(value, "MM/DD/YYYY").isValid()),
@@ -166,7 +183,7 @@ ValidationRules
 
     .ensure('phoneNumber').required().when(x => !x.child).maxLength(13).minLength(10)
 
-    //.ensure('grade').required().when(x => x.child)
+    .ensure('grade').satisfies((value) => value === "" || value >= -1).when(x => x.child)
     .ensure('gender').required().when(x => x.child)
     .ensure('birthDate').required().when(x => x.child).satisfiesRule("date")
 

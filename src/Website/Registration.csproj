@@ -25,9 +25,6 @@
     <None Remove="yarn.lock" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="wwwroot\ajax-loader.gif" />
-  </ItemGroup>
-  <ItemGroup>
     <None Update="ClientApp\app\components\Register\Confirm.ts">
       <DependentUpon>Confirm.html</DependentUpon>
     </None>

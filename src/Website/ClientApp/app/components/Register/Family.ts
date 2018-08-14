@@ -38,6 +38,7 @@ export class FamilyModel {
             }
 
             this.selectedPerson = null;
+            this.errors.splice(0, this.errors.length);
         }));
 
         this.subscriptions.push(eventAggregator.subscribe("Person_Cancel", (data) => {
@@ -69,6 +70,10 @@ export class FamilyModel {
         let p = new Person();
 
         p.child = isChild;
+
+        if (isChild) {
+            p.grade = -2;
+        }
 
         if (primary) {
             p.lastName = primary.lastName;

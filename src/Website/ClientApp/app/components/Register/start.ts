@@ -114,6 +114,7 @@ export class StartModel {
 
         this.eventModel.house.people = this.eventModel.house.people.map(p => {
             return Object.assign(new Person(), p, {
+                grade: p.child ? -2 : p.grade,
                 birthDate: p.birthDate ? moment(p.birthDate, "YYYY-MM-DD").format("M/D/YYYY") : null
             });
         });
